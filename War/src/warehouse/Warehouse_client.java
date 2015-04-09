@@ -18,7 +18,6 @@ import java.awt.Color;
 
 import javax.swing.UIManager;
 
-
 public class Warehouse_client {
 
 	private JFrame frmClientRequest;

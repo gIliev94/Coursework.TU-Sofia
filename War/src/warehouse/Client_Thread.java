@@ -8,8 +8,6 @@ import java.sql.PreparedStatement;
 
 
 
-
-
 public class Client_Thread implements Runnable{
 	DataInputStream din;
 	DataOutputStream dout;

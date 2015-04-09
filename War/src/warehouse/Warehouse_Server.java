@@ -4,20 +4,18 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.Connection;
 import java.sql.DriverManager;
-//import java.util.Scanner;
 
 
 public class Warehouse_Server {
 	
 	static final int port=4444;
 	static String url="jdbc:mysql://localhost:3306/warehouse";
-	//static Scanner sc=new Scanner(System.in);
 
 		
 	public static void main(String[] args)throws Exception {
 		Class.forName("com.mysql.jdbc.Driver");
 		//Osushtestvqvane na vruzka s bazata danni
-		Connection con=DriverManager.getConnection( url, "root", "BASKET14fena" );	
+		Connection con=DriverManager.getConnection( url, "root", "BASKET14fena" );
 	
 		ServerSocket svsock=null;
 	try{
@@ -26,7 +24,6 @@ public class Warehouse_Server {
 			System.out.println("Server is successfully started.");
 			Socket connection;
 			Thread customer;
-
 
 			while(true){
 			System.out.println("Waiting for clients to connect...");
@@ -38,8 +35,7 @@ public class Warehouse_Server {
 			customer.start();
 			Thread.yield();
 			
-			System.out.println("Client connected");	
-
+			System.out.println("Client connected");
 			}
 		}
 			catch(Exception e){
