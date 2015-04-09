@@ -18,6 +18,13 @@ CREATE TABLE `warehouse`.`customers` (
 	PRIMARY KEY ( `id` )
 ) ENGINE = InnoDB;
 
+CREATE TABLE `warehouse`.`discounts` (
+	`id` TINYINT NOT NULL  AUTO_INCREMENT ,
+	`name` VARCHAR( 255 ) NOT NULL ,
+	`required_quantity`  SMALLINT NULL DEFAULT 0 ,
+	PRIMARY KEY ( `id` )
+) ENGINE = InnoDB;
+
 CREATE TABLE `warehouse`.`orders` (
 	`id` TINYINT NOT NULL  AUTO_INCREMENT ,
 	`product_id` TINYINT NOT NULL,
@@ -38,9 +45,3 @@ CREATE TABLE `warehouse`.`orders` (
 ) ENGINE = InnoDB;
 
 
-CREATE TABLE `warehouse`.`discounts` (
-	`id` TINYINT NOT NULL  AUTO_INCREMENT ,
-	`name` VARCHAR( 255 ) NOT NULL ,
-	`required_quantity`  SMALLINT NULL DEFAULT 0 ,
-	PRIMARY KEY ( `id` )
-) ENGINE = InnoDB;
