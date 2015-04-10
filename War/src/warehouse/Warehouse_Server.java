@@ -15,7 +15,7 @@ public class Warehouse_Server {
 	public static void main(String[] args)throws Exception {
 		Class.forName("com.mysql.jdbc.Driver");
 		//Osushtestvqvane na vruzka s bazata danni
-		Connection con=DriverManager.getConnection( url, "root", "BASKET14fena" );
+		Connection con=DriverManager.getConnection( url, "root", "passxmpl" );
 	
 		ServerSocket svsock=null;
 	try{
