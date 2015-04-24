@@ -26,13 +26,11 @@ CREATE TABLE `warehouse`.`discounts` (
 ) ENGINE = InnoDB;
 
 CREATE TABLE `warehouse`.`orders` (
-	`id` TINYINT NOT NULL  AUTO_INCREMENT ,
 	`product_id` TINYINT NOT NULL,
 	`order_quantity` SMALLINT NOT NULL ,
 	`customer_id` TINYINT NOT NULL,
 	`discount_id` TINYINT NULL DEFAULT 0,
 	`reduced_price` FLOAT NOT NULL ,
-	PRIMARY KEY ( `id` ) ,
 	FOREIGN KEY ( `customer_id` )
 		REFERENCES `warehouse`.`customers`( `id` )
 		ON DELETE CASCADE,
