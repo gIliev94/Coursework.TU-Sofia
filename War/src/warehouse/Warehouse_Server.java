@@ -10,7 +10,7 @@ public class Warehouse_Server {
 	
 	public static final int port=4444;
 	public static String url="jdbc:mysql://localhost:3306/warehouse";
-	public static String password="BASKET14fena";
+	public static String password="passxmpl";
 	public static String user="root";
 
 		
