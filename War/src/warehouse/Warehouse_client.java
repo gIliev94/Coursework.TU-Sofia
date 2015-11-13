@@ -7,13 +7,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -32,28 +34,29 @@ import javax.swing.JPasswordField;
 public class Warehouse_client {
 
     // /////////////////////////////
-    private JFrame frmClientRequest;
-    private JTextArea textArea;
-    private JLabel lblNewLabel_1;
-    private JTextField textField;
-    private JTextField textField_2;
+    private JFrame formClientRequest;
+    private JTextArea responseTextArea;
+    private JLabel orderCaptionLabel;
+    private JTextField clientIdTextField;
+    private JTextField quantityTextField;
+    private JTextField clientIdTextFieldOrders;
+    private JTextField clientIdTextFieldDiscounts;
+    private JPasswordField passwordTextField;
+    private JTextField usernameTextField;
+
     private DataInputStream din;
     private DataOutputStream dout;
 
-    private Socket connection;
-    static String host = "localhost";
-    private Connection con = DriverManager.getConnection(Warehouse_Server.url,
-	    Warehouse_Server.user, Warehouse_Server.password);;
+    private Connection dbConnection;
     private PreparedStatement stat;
     private ResultSet rs;
-    public static ArrayList<String> prod;
+
+    private static final String host = "localhost";
+    private Socket clientConnection;
+
+    public static List<String> productsList;
     private int product = 0;
     private int logIndicator = 0;
-
-    private JTextField textField_1;
-    private JTextField textField_3;
-    private JPasswordField passwordField;
-    private JTextField textField_4;
 
     // ////////////////////////////
     /**
@@ -64,7 +67,7 @@ public class Warehouse_client {
 	    public void run() {
 		try {
 		    Warehouse_client window = new Warehouse_client();
-		    window.frmClientRequest.setVisible(true);
+		    window.formClientRequest.setVisible(true);
 		} catch (Exception e) {
 		    e.printStackTrace();
 		}
@@ -74,162 +77,170 @@ public class Warehouse_client {
 
     /**
      * Create the application.
+     * 
+     * @throws Exception
      */
     public Warehouse_client() throws Exception {
-	cbInit();
+	initResources();
+	initComboBox();
 	initialize();
     }
 
     /**
      * Initialize the contents of the frame.
      */
-    @SuppressWarnings("rawtypes")
     private void initialize() throws Exception {
-	frmClientRequest = new JFrame();
-	frmClientRequest.setResizable(false);
-	frmClientRequest.getContentPane().setBackground(new Color(0, 128, 128));
-	frmClientRequest.setTitle("CLIENT REQUEST");
-	frmClientRequest.setBounds(100, 100, 493, 411);
-	frmClientRequest.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	setupForm();
 
-	// //////////////////////////////////////////////////////
-	connection = new Socket(host, Warehouse_Server.port);
-	din = new DataInputStream(connection.getInputStream());
-	dout = new DataOutputStream(connection.getOutputStream());
-	// //////////////////////////////////////////////////////
-	frmClientRequest.getContentPane().setLayout(new CardLayout(0, 0));
 	JPanel panelMain = new JPanel();
-	frmClientRequest.getContentPane().add(panelMain, "name_23060868800636");
+	formClientRequest.getContentPane()
+		.add(panelMain, "name_23060868800636");
 	panelMain.setBackground(new Color(0, 128, 128));
 	panelMain.setLayout(null);
 
-	JLabel lblNewLabel = new JLabel("Client ID:");
-	lblNewLabel.setForeground(Color.YELLOW);
-	lblNewLabel.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 12));
-	lblNewLabel.setBounds(71, 75, 59, 27);
-	panelMain.add(lblNewLabel);
+	JLabel clientIdLabel = new JLabel("Client ID:");
+	clientIdLabel.setForeground(Color.YELLOW);
+	clientIdLabel.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 12));
+	clientIdLabel.setBounds(71, 75, 59, 27);
+	panelMain.add(clientIdLabel);
 
-	JLabel lblProductId = new JLabel("Product:");
-	lblProductId.setForeground(Color.YELLOW);
-	lblProductId.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 12));
-	lblProductId.setBounds(69, 8, 108, 27);
-	panelMain.add(lblProductId);
+	JLabel productIdLabel = new JLabel("Product:");
+	productIdLabel.setForeground(Color.YELLOW);
+	productIdLabel.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 12));
+	productIdLabel.setBounds(69, 8, 108, 27);
+	panelMain.add(productIdLabel);
 
-	JLabel lblQuantity = new JLabel("Quantity:");
-	lblQuantity.setForeground(Color.YELLOW);
-	lblQuantity.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 12));
-	lblQuantity.setBounds(71, 130, 59, 27);
-	panelMain.add(lblQuantity);
+	JLabel quantityLabel = new JLabel("Quantity:");
+	quantityLabel.setForeground(Color.YELLOW);
+	quantityLabel.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 12));
+	quantityLabel.setBounds(71, 130, 59, 27);
+	panelMain.add(quantityLabel);
 
-	textArea = new JTextArea();
-	textArea.setBackground(new Color(255, 255, 255));
-	textArea.setEditable(false);
-	textArea.setBounds(231, 43, 233, 147);
-	panelMain.add(textArea);
+	responseTextArea = new JTextArea();
+	responseTextArea.setBackground(new Color(255, 255, 255));
+	responseTextArea.setEditable(false);
+	responseTextArea.setBounds(231, 43, 233, 147);
+	panelMain.add(responseTextArea);
 
-	lblNewLabel_1 = new JLabel("YOUR ORDER:");
-	lblNewLabel_1.setForeground(Color.YELLOW);
-	lblNewLabel_1.setFont(new Font("Tahoma", Font.BOLD, 14));
-	lblNewLabel_1.setBounds(284, 21, 100, 14);
-	panelMain.add(lblNewLabel_1);
+	orderCaptionLabel = new JLabel("YOUR ORDER:");
+	orderCaptionLabel.setForeground(Color.YELLOW);
+	orderCaptionLabel.setFont(new Font("Tahoma", Font.BOLD, 14));
+	orderCaptionLabel.setBounds(284, 21, 100, 14);
+	panelMain.add(orderCaptionLabel);
 
-	JButton btnNewButton = new JButton("SUBMIT");
-	btnNewButton.setForeground(UIManager.getColor("Button.foreground"));
-	btnNewButton.setFont(new Font("Tahoma", Font.BOLD, 14));
-	btnNewButton.setBackground(UIManager.getColor("Button.background"));
-	btnNewButton.addActionListener(new ActionListener() {
+	JButton submitButton = new JButton("SUBMIT");
+	submitButton.setForeground(UIManager.getColor("Button.foreground"));
+	submitButton.setFont(new Font("Tahoma", Font.BOLD, 14));
+	submitButton.setBackground(UIManager.getColor("Button.background"));
+	submitButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent arg0) {
 		try {
 		    // Getting the data from client input
-		    int client = Integer.parseInt(textField.getText());
+		    int client = Integer.parseInt(clientIdTextField.getText());
 		    int prod = product;
-		    int quantity = Integer.parseInt(textField_2.getText());
-		    String msg;
+		    int quantity = Integer.parseInt(quantityTextField.getText());
+
 		    // Sending the data to the server(more like to its thread)
-		    dout.writeInt(client);
-		    dout.writeInt(prod);
-		    dout.writeInt(quantity);
-		    // Getting the response from the server and displaying it in
-		    // textArea
-		    msg = din.readUTF();
-		    textArea.setText(msg);
-		    btnNewButton.setEnabled(false);
+		    sendOrderRequest(client, prod, quantity);
+		    // Getting the response from the server and displaying it
+		    receiveResponse(submitButton);
 		} catch (Exception e) {
 		    JOptionPane
 			    .showMessageDialog(
 				    null,
 				    "Invalid data input!\nPlease enter correct values...",
 				    "ERROR", JOptionPane.ERROR_MESSAGE);
+		    System.out.println(e.getMessage());
 		}
 	    }
-	});
-	btnNewButton.setBounds(25, 201, 184, 61);
-	panelMain.add(btnNewButton);
 
-	textField = new JTextField();
-	textField.setBounds(61, 100, 86, 20);
-	panelMain.add(textField);
-	textField.setColumns(10);
+	    private void receiveResponse(JButton submitButton)
+		    throws IOException {
+		String msg;
+		msg = din.readUTF();
+		responseTextArea.setText(msg);
+		submitButton.setEnabled(false);
+	    }
 
-	textField_2 = new JTextField();
-	textField_2.setColumns(10);
-	textField_2.setBounds(61, 154, 86, 20);
-	panelMain.add(textField_2);
-
-	JButton btnNewButton_1 = new JButton("EXIT");
-	btnNewButton_1.setForeground(UIManager.getColor("Button.foreground"));
-	btnNewButton_1.setFont(new Font("Tahoma", Font.BOLD, 14));
-	btnNewButton_1.setBackground(UIManager.getColor("Button.background"));
-	btnNewButton_1.addActionListener(new ActionListener() {
-	    public void actionPerformed(ActionEvent arg0) {
-		frmClientRequest.dispose();
+	    private void sendOrderRequest(int client, int prod, int quantity)
+		    throws IOException {
+		dout.writeInt(client);
+		dout.writeInt(prod);
+		dout.writeInt(quantity);
 	    }
 	});
-	btnNewButton_1.setBounds(231, 201, 232, 61);
-	panelMain.add(btnNewButton_1);
+	submitButton.setBounds(25, 201, 184, 61);
+	panelMain.add(submitButton);
 
-	@SuppressWarnings("unchecked")
-	// Lets the client choose items from a drop down list
-	JComboBox comboBox = new JComboBox(prod.toArray());
-	comboBox.addActionListener(new ActionListener() {
+	clientIdTextField = new JTextField();
+	clientIdTextField.setBounds(61, 100, 86, 20);
+	panelMain.add(clientIdTextField);
+	clientIdTextField.setColumns(10);
+
+	quantityTextField = new JTextField();
+	quantityTextField.setColumns(10);
+	quantityTextField.setBounds(61, 154, 86, 20);
+	panelMain.add(quantityTextField);
+
+	JButton exitButton = new JButton("EXIT");
+	exitButton.setForeground(UIManager.getColor("Button.foreground"));
+	exitButton.setFont(new Font("Tahoma", Font.BOLD, 14));
+	exitButton.setBackground(UIManager.getColor("Button.background"));
+	exitButton.addActionListener(new ActionListener() {
+	    public void actionPerformed(ActionEvent arg0) {
+		formClientRequest.dispose();
+	    }
+	});
+	exitButton.setBounds(231, 201, 232, 61);
+	panelMain.add(exitButton);
+
+	JComboBox<Object> productsDropDownList = new JComboBox<>(
+		productsList.toArray());
+	productsDropDownList.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		try {
-		    String str = (String) comboBox.getSelectedItem();
-		    String substr = str.substring(str.length() - 3);
-		    stat = con
-			    .prepareStatement("select `id` from products where `model` like "
-				    + "\"%" + substr + "\"" + ";");
-		    rs = stat.executeQuery();
-		    while (rs.next()) {
-			product = rs.getInt(1);
-		    }
+		    String str = (String) productsDropDownList
+			    .getSelectedItem();
+		    String productSubstr = str.substring(str.length() - 3);
+
+		    findProduct(productSubstr);
 		} catch (Exception p) {
 		    JOptionPane.showMessageDialog(null, p.getMessage(),
 			    "ERROR", JOptionPane.ERROR_MESSAGE);
 		}
 	    }
+
+	    private void findProduct(String productSubstr) throws SQLException {
+		stat = dbConnection
+			.prepareStatement("select `id` from products where `model` like "
+				+ "\"%" + productSubstr + "\"" + ";");
+		rs = stat.executeQuery();
+		while (rs.next()) {
+		    product = rs.getInt(1);
+		}
+	    }
 	});
-	comboBox.setBounds(25, 37, 184, 27);
-	comboBox.setFont(new Font("Tahoma", Font.BOLD, 12));
-	comboBox.setSelectedItem(null);
-	panelMain.add(comboBox);
+	productsDropDownList.setBounds(25, 37, 184, 27);
+	productsDropDownList.setFont(new Font("Tahoma", Font.BOLD, 12));
+	productsDropDownList.setSelectedItem(null);
+	panelMain.add(productsDropDownList);
 
 	JPanel panelAuthentication = new JPanel();
 	panelAuthentication.setBackground(new Color(0, 128, 128));
-	frmClientRequest.getContentPane().add(panelAuthentication,
+	formClientRequest.getContentPane().add(panelAuthentication,
 		"name_39712632177488");
 	panelAuthentication.setLayout(null);
 
 	JPanel panelProfiles = new JPanel();
 	panelProfiles.setForeground(new Color(0, 0, 0));
 	panelProfiles.setBackground(new Color(0, 128, 128));
-	frmClientRequest.getContentPane().add(panelProfiles,
+	formClientRequest.getContentPane().add(panelProfiles,
 		"name_23060916454223");
 	panelProfiles.setLayout(null);
 
-	JButton btnNewButton_5 = new JButton("ORDERS & PROFITS");
-	btnNewButton_5.setFont(new Font("Tahoma", Font.BOLD, 12));
-	btnNewButton_5.addActionListener(new ActionListener() {
+	JButton ordersProfilesButton = new JButton("ORDERS & PROFITS");
+	ordersProfilesButton.setFont(new Font("Tahoma", Font.BOLD, 12));
+	ordersProfilesButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		// Goes to authentication form and sets a variable to indicate
 		// we`re trying to log in this form("ORDERS & PROFITS")
@@ -238,138 +249,163 @@ public class Warehouse_client {
 		logIndicator = 1;
 	    }
 	});
-	btnNewButton_5.setBounds(25, 298, 184, 61);
-	panelMain.add(btnNewButton_5);
+	ordersProfilesButton.setBounds(25, 298, 184, 61);
+	panelMain.add(ordersProfilesButton);
 
-	JLabel lblNewLabel_3 = new JLabel(
+	JLabel sectionLabel = new JLabel(
 		"----------------------------EMPLOYEE SECTION----------------------------");
-	lblNewLabel_3.setForeground(new Color(255, 255, 0));
-	lblNewLabel_3.setFont(new Font("Tahoma", Font.BOLD, 14));
-	lblNewLabel_3.setBounds(0, 273, 487, 14);
-	panelMain.add(lblNewLabel_3);
+	sectionLabel.setForeground(new Color(255, 255, 0));
+	sectionLabel.setFont(new Font("Tahoma", Font.BOLD, 14));
+	sectionLabel.setBounds(0, 273, 487, 14);
+	panelMain.add(sectionLabel);
 
-	JTextArea textArea_1 = new JTextArea();
-	textArea_1.setEditable(false);
-	textArea_1.setBounds(205, 70, 252, 39);
-	panelProfiles.add(textArea_1);
+	JTextArea profileOfAllTextArea = new JTextArea();
+	profileOfAllTextArea.setEditable(false);
+	profileOfAllTextArea.setBounds(205, 70, 252, 39);
+	panelProfiles.add(profileOfAllTextArea);
 
-	JTextArea textArea_2 = new JTextArea();
-	textArea_2.setEditable(false);
-	textArea_2.setBounds(205, 182, 252, 39);
-	panelProfiles.add(textArea_2);
+	JTextArea profileClientTextArea = new JTextArea();
+	profileClientTextArea.setEditable(false);
+	profileClientTextArea.setBounds(205, 182, 252, 39);
+	panelProfiles.add(profileClientTextArea);
 
-	JButton btnNewButton_2 = new JButton("ORDERS PROFILE");
-	btnNewButton_2.setFont(new Font("Tahoma", Font.BOLD, 11));
-	btnNewButton_2.addActionListener(new ActionListener() {
+	JButton ordersButton = new JButton("ORDERS PROFILE");
+	ordersButton.setFont(new Font("Tahoma", Font.BOLD, 11));
+	ordersButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent arg0) {
 		// /////////////////////////////
-		String st = "";
+		String representation = "";
 		try {
-		    stat = con.prepareStatement("call ordersProfile;");
-		    rs = stat.executeQuery();
-		    while (rs.next()) {
-			st = rs.getString(1) + "\t" + rs.getString(2) + "\t"
-				+ rs.getString(3);
-		    }
-		    st = "ORDERS\tITEMS\tPROFITS\n" + st;
-		    textArea_1.setText(st);
+		    representation = buildProfile(representation);
+		    outputProfile(profileOfAllTextArea, representation);
 		} catch (SQLException e) {
 		    JOptionPane.showMessageDialog(null, e.getMessage(),
 			    "ERROR", JOptionPane.ERROR_MESSAGE);
 		}
-		// /////////////////////////////
+		// ////////////////////////////
+	    }
+
+	    private void outputProfile(JTextArea profileOfAllTextArea,
+		    String representation) {
+		representation = "ORDERS\tITEMS\tPROFITS\n" + representation;
+		profileOfAllTextArea.setText(representation);
+	    }
+
+	    private String buildProfile(String st) throws SQLException {
+		stat = dbConnection.prepareStatement("call ordersProfile;");
+		rs = stat.executeQuery();
+		while (rs.next()) {
+		    st = rs.getString(1) + "\t" + rs.getString(2) + "\t"
+			    + rs.getString(3);
+		}
+		return st;
 	    }
 	});
-	btnNewButton_2.setBounds(33, 70, 147, 39);
-	panelProfiles.add(btnNewButton_2);
+	ordersButton.setBounds(33, 70, 147, 39);
+	panelProfiles.add(ordersButton);
 
-	textField_1 = new JTextField();
-	textField_1.setBounds(33, 151, 86, 20);
-	panelProfiles.add(textField_1);
-	textField_1.setColumns(10);
+	clientIdTextFieldOrders = new JTextField();
+	clientIdTextFieldOrders.setBounds(33, 151, 86, 20);
+	panelProfiles.add(clientIdTextFieldOrders);
+	clientIdTextFieldOrders.setColumns(10);
 
-	JLabel lblNewLabel_2 = new JLabel("CLIENT ID:");
-	lblNewLabel_2.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 11));
-	lblNewLabel_2.setForeground(new Color(255, 255, 0));
-	lblNewLabel_2.setBounds(32, 133, 73, 14);
-	panelProfiles.add(lblNewLabel_2);
+	JLabel clientIdLabelOrders = new JLabel("CLIENT ID:");
+	clientIdLabelOrders.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC,
+		11));
+	clientIdLabelOrders.setForeground(new Color(255, 255, 0));
+	clientIdLabelOrders.setBounds(32, 133, 73, 14);
+	panelProfiles.add(clientIdLabelOrders);
 
-	JButton btnNewButton_3 = new JButton("CLIENT PROFILE");
-	btnNewButton_3.addActionListener(new ActionListener() {
+	JButton clientProfileButton = new JButton("CLIENT PROFILE");
+	clientProfileButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		// /////////////////////////////
-		String str = "";
+		String representation = "";
 		int clientID = 0;
 		try {
-		    clientID = Integer.parseInt(textField_1.getText());
-		    stat = con.prepareStatement("call clientProfile("
-			    + clientID + ");");
-		    rs = stat.executeQuery();
-		    while (rs.next()) {
-			str = rs.getString(1) + "\t" + rs.getString(2) + "\t"
-				+ rs.getString(3);
-		    }
-		    str = "ORDERS\tITEMS\tPROFITS\n" + str;
-		    textArea_2.setText(str);
+		    clientID = Integer.parseInt(clientIdTextFieldOrders
+			    .getText());
+		    representation = buildClientProfile(representation,
+			    clientID);
+		    outputClientProfile(profileClientTextArea, representation);
 		} catch (SQLException e1) {
 		    JOptionPane.showMessageDialog(null, e1.getMessage(),
 			    "ERROR", JOptionPane.ERROR_MESSAGE);
 		}
 		// /////////////////////////////
 	    }
-	});
-	btnNewButton_3.setFont(new Font("Tahoma", Font.BOLD, 11));
-	btnNewButton_3.setBounds(33, 182, 147, 39);
-	panelProfiles.add(btnNewButton_3);
 
-	JButton btnNewButton_4 = new JButton("BACK TO MAIN");
-	btnNewButton_4.addActionListener(new ActionListener() {
+	    private void outputClientProfile(JTextArea profileClientTextArea,
+		    String representation) {
+		representation = "ORDERS\tITEMS\tPROFITS\n" + representation;
+		profileClientTextArea.setText(representation);
+	    }
+
+	    private String buildClientProfile(String str, int clientID)
+		    throws SQLException {
+		stat = dbConnection.prepareStatement("call clientProfile("
+			+ clientID + ");");
+		rs = stat.executeQuery();
+		while (rs.next()) {
+		    str = rs.getString(1) + "\t" + rs.getString(2) + "\t"
+			    + rs.getString(3);
+		}
+		return str;
+	    }
+	});
+	clientProfileButton.setFont(new Font("Tahoma", Font.BOLD, 11));
+	clientProfileButton.setBounds(33, 182, 147, 39);
+	panelProfiles.add(clientProfileButton);
+
+	JButton backButtonOrders = new JButton("BACK TO MAIN");
+	backButtonOrders.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		panelMain.setVisible(true);
 		panelProfiles.setVisible(false);
 	    }
 	});
-	btnNewButton_4.setFont(new Font("Tahoma", Font.BOLD, 11));
-	btnNewButton_4.setBounds(33, 283, 187, 64);
-	panelProfiles.add(btnNewButton_4);
+	backButtonOrders.setFont(new Font("Tahoma", Font.BOLD, 11));
+	backButtonOrders.setBounds(33, 283, 187, 64);
+	panelProfiles.add(backButtonOrders);
 
-	JLabel lblProfileOfAll = new JLabel("PROFILE OF ALL ORDERS");
-	lblProfileOfAll
-		.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 11));
-	lblProfileOfAll.setForeground(new Color(255, 255, 0));
-	lblProfileOfAll.setBounds(205, 52, 147, 14);
-	panelProfiles.add(lblProfileOfAll);
+	JLabel profileOfAllLabel = new JLabel("PROFILE OF ALL ORDERS");
+	profileOfAllLabel.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC,
+		11));
+	profileOfAllLabel.setForeground(new Color(255, 255, 0));
+	profileOfAllLabel.setBounds(205, 52, 147, 14);
+	panelProfiles.add(profileOfAllLabel);
 
-	JButton btnNewButton_10 = new JButton("EXIT");
-	btnNewButton_10.setFont(new Font("Tahoma", Font.BOLD, 12));
-	btnNewButton_10.addActionListener(new ActionListener() {
+	JButton exitButtonOrders = new JButton("EXIT");
+	exitButtonOrders.setFont(new Font("Tahoma", Font.BOLD, 12));
+	exitButtonOrders.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		frmClientRequest.dispose();
+		formClientRequest.dispose();
 	    }
 	});
-	btnNewButton_10.setBounds(234, 282, 223, 64);
-	panelProfiles.add(btnNewButton_10);
+	exitButtonOrders.setBounds(234, 282, 223, 64);
+	panelProfiles.add(exitButtonOrders);
 
-	JLabel lblNewLabel_5 = new JLabel("PROFILE OF SPECIFIC CLIENT:");
-	lblNewLabel_5.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 11));
-	lblNewLabel_5.setForeground(new Color(255, 255, 0));
-	lblNewLabel_5.setBounds(208, 165, 166, 14);
-	panelProfiles.add(lblNewLabel_5);
+	JLabel profileOfClientLabel = new JLabel("PROFILE OF SPECIFIC CLIENT:");
+	profileOfClientLabel.setFont(new Font("Tahoma",
+		Font.BOLD | Font.ITALIC, 11));
+	profileOfClientLabel.setForeground(new Color(255, 255, 0));
+	profileOfClientLabel.setBounds(208, 165, 166, 14);
+	panelProfiles.add(profileOfClientLabel);
 
-	JLabel lblNewLabel_9 = new JLabel("ORDER & CLIENT PROFILES");
-	lblNewLabel_9.setForeground(new Color(255, 255, 0));
-	lblNewLabel_9.setFont(new Font("Tahoma", Font.BOLD, 14));
-	lblNewLabel_9.setBounds(144, 11, 208, 14);
-	panelProfiles.add(lblNewLabel_9);
+	JLabel ordersCaptionLabel = new JLabel("ORDER & CLIENT PROFILES");
+	ordersCaptionLabel.setForeground(new Color(255, 255, 0));
+	ordersCaptionLabel.setFont(new Font("Tahoma", Font.BOLD, 14));
+	ordersCaptionLabel.setBounds(144, 11, 208, 14);
+	panelProfiles.add(ordersCaptionLabel);
 
 	JPanel panelHistories = new JPanel();
 	panelHistories.setBackground(new Color(0, 128, 128));
-	frmClientRequest.getContentPane().add(panelHistories,
+	formClientRequest.getContentPane().add(panelHistories,
 		"name_36511470292507");
 	panelHistories.setLayout(null);
 
-	JButton btnNewButton_6 = new JButton("DISCOUNTS HISTORY");
-	btnNewButton_6.addActionListener(new ActionListener() {
+	JButton discountHistoryButton = new JButton("DISCOUNTS HISTORY");
+	discountHistoryButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		// Goes to authentication form and sets a variable to indicate
 		// we`re trying to log in this form("DISCOUNTS HISTORY")
@@ -378,92 +414,116 @@ public class Warehouse_client {
 		logIndicator = 2;
 	    }
 	});
-	btnNewButton_6.setFont(new Font("Tahoma", Font.BOLD, 12));
-	btnNewButton_6.setBounds(231, 299, 233, 61);
-	panelMain.add(btnNewButton_6);
+	discountHistoryButton.setFont(new Font("Tahoma", Font.BOLD, 12));
+	discountHistoryButton.setBounds(231, 299, 233, 61);
+	panelMain.add(discountHistoryButton);
 
-	JTextArea textArea_3 = new JTextArea();
-	textArea_3.setEditable(false);
-	textArea_3.setBounds(33, 39, 266, 200);
-	panelHistories.add(textArea_3);
+	JTextArea discountsHistoryTextArea = new JTextArea();
+	discountsHistoryTextArea.setEditable(false);
+	discountsHistoryTextArea.setBounds(33, 39, 266, 200);
+	panelHistories.add(discountsHistoryTextArea);
 
-	textField_3 = new JTextField();
-	textField_3.setBounds(319, 143, 141, 30);
-	panelHistories.add(textField_3);
-	textField_3.setColumns(10);
+	clientIdTextFieldDiscounts = new JTextField();
+	clientIdTextFieldDiscounts.setBounds(319, 143, 141, 30);
+	panelHistories.add(clientIdTextFieldDiscounts);
+	clientIdTextFieldDiscounts.setColumns(10);
 
-	JButton btnNewButton_7 = new JButton("FOR CLIENT VIEW");
-	btnNewButton_7.addActionListener(new ActionListener() {
+	JButton clientViewButton = new JButton("FOR CLIENT VIEW");
+	clientViewButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		// /////////////////////////////
-		String st = "";
-		String concat = "";
-		String captions = "";
+		String representation = "";
+		try {
+		    representation = buildClientDiscountReport(representation);
+		    outputClientDiscountReport(discountsHistoryTextArea,
+			    representation);
+		} catch (SQLException m) {
+		    JOptionPane.showMessageDialog(null, m.getMessage(),
+			    "ERROR", JOptionPane.ERROR_MESSAGE);
+		}
+		// /////////////////////////////
+	    }
+
+	    private void outputClientDiscountReport(
+		    JTextArea discountsHistoryTextArea, String representation) {
+		String captions;
+		captions = " client\t         discount\n";
+		discountsHistoryTextArea.setText(captions + representation);
+	    }
+
+	    private String buildClientDiscountReport(String concat)
+		    throws SQLException {
+		String repString = "";
 		String clientName = "";
-		try {
-		    clientName = textField_3.getText();
-		    stat = con
-			    .prepareStatement("select *from discountHistory where client="
-				    + "\""
-				    + clientName
-				    + "\""
-				    + "order by discount;");
-		    rs = stat.executeQuery();
-		    while (rs.next()) {
-			st = " " + rs.getString(1) + "             "
-				+ rs.getString(2);
-			concat = concat + "\n" + st;
-		    }
-		    captions = " client\t         discount\n";
-		    textArea_3.setText(captions + concat);
-		} catch (SQLException m) {
-		    JOptionPane.showMessageDialog(null, m.getMessage(),
-			    "ERROR", JOptionPane.ERROR_MESSAGE);
+		clientName = clientIdTextFieldDiscounts.getText();
+		stat = dbConnection
+			.prepareStatement("select *from discountHistory where client="
+				+ "\""
+				+ clientName
+				+ "\""
+				+ "order by discount;");
+		rs = stat.executeQuery();
+		while (rs.next()) {
+		    repString = " " + rs.getString(1) + "             "
+			    + rs.getString(2);
+		    concat = concat + "\n" + repString;
 		}
-		// /////////////////////////////
+		return concat;
 	    }
 	});
-	btnNewButton_7.setFont(new Font("Tahoma", Font.BOLD, 11));
-	btnNewButton_7.setBounds(319, 184, 141, 55);
-	panelHistories.add(btnNewButton_7);
+	clientViewButton.setFont(new Font("Tahoma", Font.BOLD, 11));
+	clientViewButton.setBounds(319, 184, 141, 55);
+	panelHistories.add(clientViewButton);
 
-	JButton btnNewButton_8 = new JButton("ALL VIEW");
-	btnNewButton_8.addActionListener(new ActionListener() {
+	JButton allViewButton = new JButton("ALL VIEW");
+	allViewButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		// /////////////////////////////
-		String st = "";
-		String concat = "";
-		String captions = "";
+		String representation = "";
 		try {
-		    stat = con
-			    .prepareStatement("select *from discountHistory;");
-		    rs = stat.executeQuery();
-		    while (rs.next()) {
-			st = " " + rs.getString(1) + "             "
-				+ rs.getString(2);
-			concat = concat + "\n" + st;
-		    }
-		    captions = " client\t         discount\n";
-		    textArea_3.setText(captions + concat);
+		    representation = buildDiscountReport(representation);
+		    outputDiscountReport(discountsHistoryTextArea,
+			    representation);
 		} catch (SQLException m) {
 		    JOptionPane.showMessageDialog(null, m.getMessage(),
 			    "ERROR", JOptionPane.ERROR_MESSAGE);
 		}
 		// /////////////////////////////
 	    }
+
+	    private void outputDiscountReport(
+		    JTextArea discountsHistoryTextArea, String concat) {
+		String captions = "";
+		captions = " client\t         discount\n";
+		discountsHistoryTextArea.setText(captions + concat);
+	    }
+
+	    private String buildDiscountReport(String concat)
+		    throws SQLException {
+		String st = "";
+		stat = dbConnection
+			.prepareStatement("select *from discountHistory;");
+		rs = stat.executeQuery();
+		while (rs.next()) {
+		    st = " " + rs.getString(1) + "             "
+			    + rs.getString(2);
+		    concat = concat + "\n" + st;
+		}
+		return concat;
+	    }
 	});
-	btnNewButton_8.setFont(new Font("Tahoma", Font.BOLD, 11));
-	btnNewButton_8.setBounds(319, 39, 141, 55);
-	panelHistories.add(btnNewButton_8);
+	allViewButton.setFont(new Font("Tahoma", Font.BOLD, 11));
+	allViewButton.setBounds(319, 39, 141, 55);
+	panelHistories.add(allViewButton);
 
-	JLabel lblNewLabel_4 = new JLabel("DISCOUNTS HISTORY");
-	lblNewLabel_4.setFont(new Font("Tahoma", Font.BOLD, 14));
-	lblNewLabel_4.setForeground(new Color(255, 255, 0));
-	lblNewLabel_4.setBounds(82, 14, 162, 14);
-	panelHistories.add(lblNewLabel_4);
+	JLabel dicountsCaptionLabel = new JLabel("DISCOUNTS HISTORY");
+	dicountsCaptionLabel.setFont(new Font("Tahoma", Font.BOLD, 14));
+	dicountsCaptionLabel.setForeground(new Color(255, 255, 0));
+	dicountsCaptionLabel.setBounds(82, 14, 162, 14);
+	panelHistories.add(dicountsCaptionLabel);
 
-	JButton btnNewButton_9 = new JButton("BACK TO MAIN");
-	btnNewButton_9.addActionListener(new ActionListener() {
+	JButton backButtonDiscounts = new JButton("BACK TO MAIN");
+	backButtonDiscounts.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent arg0) {
 		// /////////////////////////////
 		panelMain.setVisible(true);
@@ -471,109 +531,136 @@ public class Warehouse_client {
 		// /////////////////////////////
 	    }
 	});
-	btnNewButton_9.setFont(new Font("Tahoma", Font.BOLD, 11));
-	btnNewButton_9.setBounds(33, 283, 187, 63);
-	panelHistories.add(btnNewButton_9);
+	backButtonDiscounts.setFont(new Font("Tahoma", Font.BOLD, 11));
+	backButtonDiscounts.setBounds(33, 283, 187, 63);
+	panelHistories.add(backButtonDiscounts);
 
-	JLabel lblClientId = new JLabel("CLIENT NAME:");
-	lblClientId.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 11));
-	lblClientId.setForeground(new Color(255, 255, 0));
-	lblClientId.setBounds(319, 121, 84, 14);
-	panelHistories.add(lblClientId);
+	JLabel clientIdLabelDiscounts = new JLabel("CLIENT NAME:");
+	clientIdLabelDiscounts.setFont(new Font("Tahoma", Font.BOLD
+		| Font.ITALIC, 11));
+	clientIdLabelDiscounts.setForeground(new Color(255, 255, 0));
+	clientIdLabelDiscounts.setBounds(319, 121, 84, 14);
+	panelHistories.add(clientIdLabelDiscounts);
 
-	JButton button = new JButton("EXIT");
-	button.addActionListener(new ActionListener() {
+	JButton exitButtonDiscounts = new JButton("EXIT");
+	exitButtonDiscounts.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		frmClientRequest.dispose();
+		formClientRequest.dispose();
 	    }
 	});
-	button.setFont(new Font("Tahoma", Font.BOLD, 12));
-	button.setBounds(237, 281, 223, 64);
-	panelHistories.add(button);
+	exitButtonDiscounts.setFont(new Font("Tahoma", Font.BOLD, 12));
+	exitButtonDiscounts.setBounds(237, 281, 223, 64);
+	panelHistories.add(exitButtonDiscounts);
 
-	passwordField = new JPasswordField();
-	passwordField.setBounds(122, 167, 220, 41);
-	panelAuthentication.add(passwordField);
+	passwordTextField = new JPasswordField();
+	passwordTextField.setBounds(122, 167, 220, 41);
+	panelAuthentication.add(passwordTextField);
 
-	textField_4 = new JTextField();
-	textField_4.setBounds(122, 102, 220, 29);
-	panelAuthentication.add(textField_4);
-	textField_4.setColumns(10);
+	usernameTextField = new JTextField();
+	usernameTextField.setBounds(122, 102, 220, 29);
+	panelAuthentication.add(usernameTextField);
+	usernameTextField.setColumns(10);
 
 	// Log in form for some of the secondary panels
-	JButton btnNewButton_11 = new JButton("LOG IN");
-	btnNewButton_11.addActionListener(new ActionListener() {
+	JButton loginButton = new JButton("LOG IN");
+	loginButton.addActionListener(new ActionListener() {
 	    @SuppressWarnings("deprecation")
 	    public void actionPerformed(ActionEvent e) {
-		String username = textField_4.getText();
-		String password = passwordField.getText();
+		String username = usernameTextField.getText();
+		String password = passwordTextField.getText();
 
 		// Basically it refers the user to the form indicated by
 		// variable(logIndicator) if correct user/pass are present
-		if (username.equalsIgnoreCase(Warehouse_Server.user)
-			&& password.equals(Warehouse_Server.password)
+		if (username.equalsIgnoreCase(DataLayer.user)
+			&& password.equals(DataLayer.password)
 			&& logIndicator == 1) {
-		    panelAuthentication.setVisible(false);
-		    panelProfiles.setVisible(true);
-		    passwordField.setText("");
-		    textField_4.setText("");
-		} else if (username.equalsIgnoreCase(Warehouse_Server.user)
-			&& password.equals(Warehouse_Server.password)
+		    proceedProfiles(panelAuthentication, panelProfiles);
+		    clearFields();
+		} else if (username.equalsIgnoreCase(DataLayer.user)
+			&& password.equals(DataLayer.password)
 			&& logIndicator == 2) {
-		    panelAuthentication.setVisible(false);
-		    panelHistories.setVisible(true);
-		    passwordField.setText("");
-		    textField_4.setText("");
+		    proceedProfiles(panelAuthentication, panelHistories);
+		    clearFields();
 		} else
 		    JOptionPane.showMessageDialog(null,
 			    "Wrong username/password!!!", "ERROR",
 			    JOptionPane.ERROR_MESSAGE);
 	    }
-	});
-	btnNewButton_11.setFont(new Font("Tahoma", Font.BOLD, 12));
-	btnNewButton_11.setBounds(71, 242, 164, 66);
-	panelAuthentication.add(btnNewButton_11);
 
-	JButton btnNewButton_12 = new JButton("BACK TO MAIN");
-	btnNewButton_12.addActionListener(new ActionListener() {
+	    private void clearFields() {
+		passwordTextField.setText("");
+		usernameTextField.setText("");
+	    }
+
+	    private void proceedProfiles(JPanel panelAuthentication,
+		    JPanel panelProfiles) {
+		panelAuthentication.setVisible(false);
+		panelProfiles.setVisible(true);
+	    }
+	});
+	loginButton.setFont(new Font("Tahoma", Font.BOLD, 12));
+	loginButton.setBounds(71, 242, 164, 66);
+	panelAuthentication.add(loginButton);
+
+	JButton backButtonLogin = new JButton("BACK TO MAIN");
+	backButtonLogin.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		panelMain.setVisible(true);
 		panelAuthentication.setVisible(false);
 	    }
 	});
-	btnNewButton_12.setFont(new Font("Tahoma", Font.BOLD, 12));
-	btnNewButton_12.setBounds(261, 242, 176, 66);
-	panelAuthentication.add(btnNewButton_12);
+	backButtonLogin.setFont(new Font("Tahoma", Font.BOLD, 12));
+	backButtonLogin.setBounds(261, 242, 176, 66);
+	panelAuthentication.add(backButtonLogin);
 
-	JLabel lblNewLabel_6 = new JLabel("AUTHENTICATION FORM");
-	lblNewLabel_6.setFont(new Font("Tahoma", Font.BOLD, 14));
-	lblNewLabel_6.setForeground(new Color(255, 255, 0));
-	lblNewLabel_6.setBounds(147, 23, 199, 14);
-	panelAuthentication.add(lblNewLabel_6);
+	JLabel loginCaptionLabel = new JLabel("AUTHENTICATION FORM");
+	loginCaptionLabel.setFont(new Font("Tahoma", Font.BOLD, 14));
+	loginCaptionLabel.setForeground(new Color(255, 255, 0));
+	loginCaptionLabel.setBounds(147, 23, 199, 14);
+	panelAuthentication.add(loginCaptionLabel);
 
-	JLabel lblNewLabel_7 = new JLabel("USERNAME:");
-	lblNewLabel_7.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 11));
-	lblNewLabel_7.setForeground(new Color(255, 255, 0));
-	lblNewLabel_7.setBounds(122, 77, 113, 14);
-	panelAuthentication.add(lblNewLabel_7);
+	JLabel usernameLabel = new JLabel("USERNAME:");
+	usernameLabel.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 11));
+	usernameLabel.setForeground(new Color(255, 255, 0));
+	usernameLabel.setBounds(122, 77, 113, 14);
+	panelAuthentication.add(usernameLabel);
 
-	JLabel lblNewLabel_8 = new JLabel("PASSWORD:");
-	lblNewLabel_8.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 11));
-	lblNewLabel_8.setForeground(new Color(255, 255, 0));
-	lblNewLabel_8.setBounds(122, 142, 96, 14);
-	panelAuthentication.add(lblNewLabel_8);
+	JLabel passwordLabel = new JLabel("PASSWORD:");
+	passwordLabel.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 11));
+	passwordLabel.setForeground(new Color(255, 255, 0));
+	passwordLabel.setBounds(122, 142, 96, 14);
+	panelAuthentication.add(passwordLabel);
 
     }
 
+    private void setupForm() {
+	formClientRequest = new JFrame();
+	formClientRequest.setResizable(false);
+	formClientRequest.getContentPane()
+		.setBackground(new Color(0, 128, 128));
+	formClientRequest.setTitle("CLIENT REQUEST");
+	formClientRequest.setBounds(100, 100, 493, 411);
+	formClientRequest.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	formClientRequest.getContentPane().setLayout(new CardLayout(0, 0));
+    }
+
+    private void initResources() throws UnknownHostException, IOException,
+	    ClassNotFoundException, SQLException {
+	clientConnection = new Socket(host, Warehouse_Server.port);
+	dbConnection = new DataLayer().getConnection();
+	din = new DataInputStream(clientConnection.getInputStream());
+	dout = new DataOutputStream(clientConnection.getOutputStream());
+    }
+
     // Initializes/Fills the ComboBox with the products
-    private void cbInit() throws Exception {
-	stat = con
+    private void initComboBox() throws Exception {
+	stat = dbConnection
 		.prepareStatement("select `group`,`brand`,`model` from products order by `group`;");
 	rs = stat.executeQuery();
-	prod = new ArrayList<String>();
+	productsList = new ArrayList<String>();
 
 	while (rs.next()) {
-	    prod.add(rs.getString(1) + " " + rs.getString(2) + " "
+	    productsList.add(rs.getString(1) + " " + rs.getString(2) + " "
 		    + rs.getString(3));
 	}
     }
