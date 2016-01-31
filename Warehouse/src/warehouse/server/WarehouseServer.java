@@ -89,6 +89,7 @@ public class WarehouseServer {
 	panel.setTitle("SERVER");
 	panel.setIconImage(new ImageIcon(new WarehouseServer().getClass().getResource("/server.png")).getImage());
 	panel.setBounds(display.width / 2, display.height / 2, 450, 250);
+	panel.setResizable(false);
 	panel.setVisible(true);
 
 	button.setBounds(display.width / 2, display.height / 2, 450, 250);
