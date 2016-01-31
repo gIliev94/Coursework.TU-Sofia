@@ -22,14 +22,16 @@ public class DatabaseConnector {
     }
 
     /**
-     * @return
+     * 
+     * @return The instance of the database connector.
      */
     public static DatabaseConnector getInstance() {
 	return DATABASE;
     }
 
     /**
-     * @return
+     * 
+     * @return The connection to the actual database.
      * @throws ClassNotFoundException
      * @throws SQLException
      */
