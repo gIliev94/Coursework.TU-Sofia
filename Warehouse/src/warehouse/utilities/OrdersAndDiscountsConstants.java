@@ -7,7 +7,7 @@ package warehouse.utilities;
  * @author Georgi Iliev
  *
  */
-public class ConstantsOrdersDiscounts {
+public class OrdersAndDiscountsConstants {
 
     public static final int SMALL_ORDER = 20;
     public static final int MEDIUM_ORDER = 40;
