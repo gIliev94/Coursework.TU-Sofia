@@ -123,6 +123,7 @@ public class Client {
 
     /**
      * Create the application.
+     * 
      * @throws Exception
      */
     public Client() throws Exception {
