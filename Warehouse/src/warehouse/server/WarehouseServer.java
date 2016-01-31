@@ -96,6 +96,7 @@ public class WarehouseServer {
 	button.setFont(new Font("Courier New", Font.BOLD, 14));
 	button.setBackground(Color.BLACK);
 	button.setForeground(Color.WHITE);
+	button.setFocusPainted(false);
 	panel.add(button);
 
 	button.addActionListener(new ActionListener() {
