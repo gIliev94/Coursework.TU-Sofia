@@ -40,6 +40,7 @@ import warehouse.server.WarehouseServer;
 /**
  * Client logic implementation/GUI for interaction with the server.
  * 
+ * 
  * @author Georgi Iliev
  *
  */
