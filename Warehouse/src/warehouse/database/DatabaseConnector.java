@@ -34,7 +34,6 @@ public class DatabaseConnector {
      * @throws SQLException
      */
     public Connection getConnection() throws ClassNotFoundException, SQLException {
-	Class.forName("com.mysql.jdbc.Driver");
 	return DriverManager.getConnection(DBConstants.URL, DBConstants.USER, DBConstants.PASSWORD);
     }
 }
