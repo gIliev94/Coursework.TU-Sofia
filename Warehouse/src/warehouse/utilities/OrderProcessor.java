@@ -16,20 +16,20 @@ public class OrderProcessor {
 
 	switch (order.getQuantity()) {
 
-	case OrdersAndDiscounts.SMALL_ORDER:
-	    order = buildOrder(order, OrdersAndDiscounts.DISCOUNT_20_UNITS, OrdersAndDiscounts.PRICEDROP_RATIO_SMALL);
+	case ConstantsOrdersDiscounts.SMALL_ORDER:
+	    order = buildOrder(order, ConstantsOrdersDiscounts.DISCOUNT_20_UNITS, ConstantsOrdersDiscounts.PRICEDROP_RATIO_SMALL);
 	    break;
-	case OrdersAndDiscounts.MEDIUM_ORDER:
-	    order = buildOrder(order, OrdersAndDiscounts.DISCOUNT_40_UNITS, OrdersAndDiscounts.PRICEDROP_RATIO_MEDIUM);
+	case ConstantsOrdersDiscounts.MEDIUM_ORDER:
+	    order = buildOrder(order, ConstantsOrdersDiscounts.DISCOUNT_40_UNITS, ConstantsOrdersDiscounts.PRICEDROP_RATIO_MEDIUM);
 	    break;
-	case OrdersAndDiscounts.LARGE_ORDER:
-	    order = buildOrder(order, OrdersAndDiscounts.DISCOUNT_60_UNITS, OrdersAndDiscounts.PRICEDROP_RATIO_LARGE);
+	case ConstantsOrdersDiscounts.LARGE_ORDER:
+	    order = buildOrder(order, ConstantsOrdersDiscounts.DISCOUNT_60_UNITS, ConstantsOrdersDiscounts.PRICEDROP_RATIO_LARGE);
 	    break;
-	case OrdersAndDiscounts.SUPER_ORDER:
-	    order = buildOrder(order, OrdersAndDiscounts.DISCOUNT_80_UNITS, OrdersAndDiscounts.PRICEDROP_RATIO_SUPER);
+	case ConstantsOrdersDiscounts.SUPER_ORDER:
+	    order = buildOrder(order, ConstantsOrdersDiscounts.DISCOUNT_80_UNITS, ConstantsOrdersDiscounts.PRICEDROP_RATIO_SUPER);
 	    break;
 	default:
-	    order = buildOrder(order, OrdersAndDiscounts.NO_DISCOUNT, OrdersAndDiscounts.NO_PRICEDROP);
+	    order = buildOrder(order, ConstantsOrdersDiscounts.NO_DISCOUNT, ConstantsOrdersDiscounts.NO_PRICEDROP);
 	    break;
 	}
 
