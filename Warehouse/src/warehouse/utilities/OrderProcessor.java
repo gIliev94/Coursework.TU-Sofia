@@ -3,30 +3,40 @@ package warehouse.utilities;
 import java.util.List;
 
 /**
+ * Processor implementation for the orders.
+ * 
  * @author Gerogi Iliev
  *
  */
 public class OrderProcessor {
 
     /**
+     * Processes the order, identifiying the order type, discount and pricedrop
+     * ratios.
+     * 
      * @param order
-     * @return
+     *            - the order to be processed.
+     * @return An order that is ready to be submitted.
      */
     public static Order getProcessedOrder(Order order) {
 
 	switch (order.getQuantity()) {
 
 	case ConstantsOrdersDiscounts.SMALL_ORDER:
-	    order = buildOrder(order, ConstantsOrdersDiscounts.DISCOUNT_20_UNITS, ConstantsOrdersDiscounts.PRICEDROP_RATIO_SMALL);
+	    order = buildOrder(order, ConstantsOrdersDiscounts.DISCOUNT_20_UNITS,
+		    ConstantsOrdersDiscounts.PRICEDROP_RATIO_SMALL);
 	    break;
 	case ConstantsOrdersDiscounts.MEDIUM_ORDER:
-	    order = buildOrder(order, ConstantsOrdersDiscounts.DISCOUNT_40_UNITS, ConstantsOrdersDiscounts.PRICEDROP_RATIO_MEDIUM);
+	    order = buildOrder(order, ConstantsOrdersDiscounts.DISCOUNT_40_UNITS,
+		    ConstantsOrdersDiscounts.PRICEDROP_RATIO_MEDIUM);
 	    break;
 	case ConstantsOrdersDiscounts.LARGE_ORDER:
-	    order = buildOrder(order, ConstantsOrdersDiscounts.DISCOUNT_60_UNITS, ConstantsOrdersDiscounts.PRICEDROP_RATIO_LARGE);
+	    order = buildOrder(order, ConstantsOrdersDiscounts.DISCOUNT_60_UNITS,
+		    ConstantsOrdersDiscounts.PRICEDROP_RATIO_LARGE);
 	    break;
 	case ConstantsOrdersDiscounts.SUPER_ORDER:
-	    order = buildOrder(order, ConstantsOrdersDiscounts.DISCOUNT_80_UNITS, ConstantsOrdersDiscounts.PRICEDROP_RATIO_SUPER);
+	    order = buildOrder(order, ConstantsOrdersDiscounts.DISCOUNT_80_UNITS,
+		    ConstantsOrdersDiscounts.PRICEDROP_RATIO_SUPER);
 	    break;
 	default:
 	    order = buildOrder(order, ConstantsOrdersDiscounts.NO_DISCOUNT, ConstantsOrdersDiscounts.NO_PRICEDROP);

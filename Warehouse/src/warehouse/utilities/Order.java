@@ -3,7 +3,9 @@ package warehouse.utilities;
 import java.util.List;
 
 /**
- * @author GEORGI
+ * Implementation for Orders object.
+ * 
+ * @author Georgi Iliev
  *
  */
 public class Order {
