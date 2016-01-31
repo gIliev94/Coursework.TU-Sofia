@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.sql.Connection;
@@ -88,9 +89,13 @@ public class Client {
 		    setComponentStyles();
 		    Client window = new Client();
 		    window.formClientRequest.setVisible(true);
+		} catch (ConnectException ce) {
+		    LOG.info("No server available for connection!");
+		    JOptionPane.showMessageDialog(null, "No server available for connection!", "ERROR",
+			    JOptionPane.ERROR_MESSAGE);
 		} catch (Exception e) {
 		    LOG.error("Problem occurred: ", e);
-		    JOptionPane.showMessageDialog(null, "Problem occurred: " + e.getLocalizedMessage(), "ERROR",
+		    JOptionPane.showMessageDialog(null, "Problem occurred: " + e.getClass().getName(), "ERROR",
 			    JOptionPane.ERROR_MESSAGE);
 		}
 
@@ -118,7 +123,6 @@ public class Client {
 
     /**
      * Create the application.
-     * 
      * @throws Exception
      */
     public Client() throws Exception {
@@ -130,7 +134,7 @@ public class Client {
     /**
      * Initialize the contents of the frame.
      */
-    private void initialize() throws Exception {
+    private void initialize() {
 	setupForm();
 
 	JPanel panelMain = new JPanel();
