@@ -195,6 +195,7 @@ public class Client {
 	exitButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent arg0) {
 		formClientRequest.dispose();
+		JOptionPane.showMessageDialog(null, "Client disconnected.", "INFO", JOptionPane.INFORMATION_MESSAGE);
 	    }
 	});
 
