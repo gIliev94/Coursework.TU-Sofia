@@ -177,7 +177,7 @@ public class Client {
 		    receiveResponse(submitButton);
 		} catch (IOException ioe) {
 		    LOG.warn("Problem exchanging information: ", ioe);
-		    JOptionPane.showMessageDialog(null, "Problem exchanging information: " + ioe.getMessage(), "ERROR",
+		    JOptionPane.showMessageDialog(null, "Problem exchanging information: " + ioe.getLocalizedMessage(), "ERROR",
 			    JOptionPane.ERROR_MESSAGE);
 		}
 	    }
@@ -209,7 +209,7 @@ public class Client {
 			    JOptionPane.ERROR_MESSAGE);
 		} catch (SQLException sqle) {
 		    LOG.error("Problem accessing DB: ", sqle);
-		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getMessage(), "ERROR",
+		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getLocalizedMessage(), "ERROR",
 			    JOptionPane.ERROR_MESSAGE);
 		}
 		JOptionPane.showMessageDialog(null, "Client disconnected.", "INFO", JOptionPane.INFORMATION_MESSAGE);
@@ -244,7 +244,7 @@ public class Client {
 		    findProduct(model);
 		} catch (SQLException sqle) {
 		    LOG.error("Problem accessing DB: ", sqle);
-		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getMessage(), "ERROR",
+		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getLocalizedMessage(), "ERROR",
 			    JOptionPane.ERROR_MESSAGE);
 		}
 	    }
@@ -303,7 +303,7 @@ public class Client {
 		    showProfile(profileOfAllTextArea, profile);
 		} catch (SQLException sqle) {
 		    LOG.error("Problem accessing DB: ", sqle);
-		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getMessage(), "ERROR",
+		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getLocalizedMessage(), "ERROR",
 			    JOptionPane.ERROR_MESSAGE);
 		}
 	    }
@@ -336,7 +336,7 @@ public class Client {
 		    outputClientProfile(profileClientTextArea, profile);
 		} catch (SQLException sqle) {
 		    LOG.error("Problem accessing DB: ", sqle);
-		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getMessage(), "ERROR",
+		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getLocalizedMessage(), "ERROR",
 			    JOptionPane.ERROR_MESSAGE);
 		}
 	    }
@@ -397,7 +397,7 @@ public class Client {
 		    outputDiscountReport(discountsHistoryTextArea, report);
 		} catch (SQLException sqle) {
 		    LOG.error("Problem accessing DB: ", sqle);
-		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getMessage(), "ERROR",
+		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getLocalizedMessage(), "ERROR",
 			    JOptionPane.ERROR_MESSAGE);
 		}
 	    }
@@ -431,7 +431,7 @@ public class Client {
 		    outputClientDiscountReport(discountsHistoryTextArea, clientDiscountReport);
 		} catch (SQLException sqle) {
 		    LOG.error("Problem accessing DB: ", sqle);
-		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getMessage(), "ERROR",
+		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getLocalizedMessage(), "ERROR",
 			    JOptionPane.ERROR_MESSAGE);
 		}
 	    }
