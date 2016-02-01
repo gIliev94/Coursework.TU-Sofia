@@ -9,6 +9,9 @@ package warehouse.utilities;
  */
 public class OrdersAndDiscountsConstants {
 
+    private OrdersAndDiscountsConstants() {
+    }
+
     public static final int SMALL_ORDER = 20;
     public static final int MEDIUM_ORDER = 40;
     public static final int LARGE_ORDER = 60;
