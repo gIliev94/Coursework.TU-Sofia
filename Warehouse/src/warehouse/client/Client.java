@@ -95,7 +95,7 @@ public class Client {
 			    JOptionPane.ERROR_MESSAGE);
 		} catch (Exception e) {
 		    LOG.error("Problem occurred: ", e);
-		    JOptionPane.showMessageDialog(null, "Problem occurred: " + e.getClass().getName(), "ERROR",
+		    JOptionPane.showMessageDialog(null, "Problem occurred: " + e.getLocalizedMessage(), "ERROR",
 			    JOptionPane.ERROR_MESSAGE);
 		}
 
@@ -184,6 +184,7 @@ public class Client {
 
 	    private void receiveResponse(JButton submitButton) throws IOException {
 		String responseContent;
+
 		responseContent = responseStream.readUTF();
 		responseTextArea.setText(responseContent);
 		submitButton.setEnabled(false);
@@ -200,6 +201,17 @@ public class Client {
 	exitButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent arg0) {
 		formClientRequest.dispose();
+		try {
+		    cleanup();
+		} catch (IOException e) {
+		    LOG.error("Problem occurred: ", e);
+		    JOptionPane.showMessageDialog(null, "Problem occurred: " + e.getLocalizedMessage(), "ERROR",
+			    JOptionPane.ERROR_MESSAGE);
+		} catch (SQLException sqle) {
+		    LOG.error("Problem accessing DB: ", sqle);
+		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getMessage(), "ERROR",
+			    JOptionPane.ERROR_MESSAGE);
+		}
 		JOptionPane.showMessageDialog(null, "Client disconnected.", "INFO", JOptionPane.INFORMATION_MESSAGE);
 	    }
 	});
@@ -809,5 +821,10 @@ public class Client {
 	loginButton.setFont(new Font("Tahoma", Font.BOLD, 12));
 	loginButton.setBounds(71, 242, 164, 66);
 	panelAuthentication.add(loginButton);
+    }
+
+    private void cleanup() throws IOException, SQLException {
+	requestStream.close();
+	responseStream.close();
     }
 }

@@ -104,6 +104,7 @@ public class WarehouseServer {
 		try {
 		    LOG.warn("Stopping server...");
 		    panel.dispose();
+		    clientSocket.close();
 		    serverSocket.close();
 		} catch (Exception exc) {
 		    LOG.error("Problem occurred: ", exc);

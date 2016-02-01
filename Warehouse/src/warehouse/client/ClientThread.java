@@ -78,15 +78,6 @@ public class ClientThread implements Runnable {
 	} catch (IOException e) {
 	    LOG.info("Client disconnected.");
 	    JOptionPane.showMessageDialog(null, "Client disconnected.", "INFO", JOptionPane.INFORMATION_MESSAGE);
-	} finally {
-	    try {
-		requestStream.close();
-		responseStream.close();
-	    } catch (IOException e) {
-		LOG.error("Problem occurred: ", e);
-		JOptionPane.showMessageDialog(null, "Problem occurred: " + e.getLocalizedMessage(), "ERROR",
-			JOptionPane.ERROR_MESSAGE);
-	    }
 	}
     }
 
@@ -113,6 +104,7 @@ public class ClientThread implements Runnable {
 	getData(quantities, product_id, quantity);
 	if (quantities.get(product_id - 1) <= 0) {
 	    responseStream.writeUTF("\n   PRODUCT OUT OF STOCK!!!");
+	    responseStream.flush();
 	}
 	if (quantities.get(product_id - 1) < quantity) {
 	    responseStream.writeUTF("\n    INSUFFICIENT QUANTITY!!!\n\n       ONLY  " + quantities.get(product_id - 1)
