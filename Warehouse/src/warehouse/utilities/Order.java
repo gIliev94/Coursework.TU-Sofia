@@ -3,7 +3,7 @@ package warehouse.utilities;
 import java.util.List;
 
 /**
- * Implementation for Orders object.
+ * Implementation for order object.
  * 
  * @author Georgi Iliev
  *
@@ -17,7 +17,8 @@ public class Order {
     private int client;
     private int productId;
     private int quantity;
-    private List<Float> prices;
+
+    private List<Object> prices;
 
     public int getPriceDrop() {
 	return priceDrop;
@@ -75,11 +76,11 @@ public class Order {
 	this.quantity = quantity;
     }
 
-    public List<Float> getPrices() {
+    public List<Object> getPrices() {
 	return prices;
     }
 
-    public void setPrices(List<Float> prices) {
+    public void setPrices(List<Object> prices) {
 	this.prices = prices;
     }
 

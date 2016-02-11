@@ -25,8 +25,8 @@ public class OrdersAndDiscountsConstants {
 
     public static final double NO_PRICEDROP = 0.00;
     public static final double PRICEDROP_RATIO_SMALL = 0.05;
-    public static final double PRICEDROP_RATIO_MEDIUM = 10;
-    public static final double PRICEDROP_RATIO_LARGE = 15;
-    public static final double PRICEDROP_RATIO_SUPER = 20;
+    public static final double PRICEDROP_RATIO_MEDIUM = 0.10;
+    public static final double PRICEDROP_RATIO_LARGE = 0.15;
+    public static final double PRICEDROP_RATIO_SUPER = 0.20;
 
 }

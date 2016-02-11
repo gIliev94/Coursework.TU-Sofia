@@ -1,5 +1,6 @@
 package warehouse.utilities;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -19,9 +20,9 @@ public class OrderProcessor {
      * @return An order that is ready to be submitted.
      */
     public static Order getProcessedOrder(Order order) {
+	int orderedQuantity = order.getQuantity();
 
-	switch (order.getQuantity()) {
-
+	switch (orderedQuantity) {
 	case OrdersAndDiscountsConstants.SMALL_ORDER:
 	    order = buildOrder(order, OrdersAndDiscountsConstants.DISCOUNT_20_UNITS,
 		    OrdersAndDiscountsConstants.PRICEDROP_RATIO_SMALL);
@@ -47,19 +48,20 @@ public class OrderProcessor {
     }
 
     private static Order buildOrder(Order order, int discount, double priceDropRatio) {
+	List<Object> priceList = order.getPrices();
 
-	List<Float> prices = order.getPrices();
+	double price = (double) priceList.get(order.getProductId() - 1);
+
+	double reducedPrice = (double) price - priceDropRatio * price;
+	Double preciseReducedPrice = new BigDecimal(reducedPrice).setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+	double totalPrice = reducedPrice * order.getQuantity();
+	Double preciseTotalPrice = new BigDecimal(totalPrice).setScale(3, BigDecimal.ROUND_HALF_UP).doubleValue();
 
 	order.setDiscount(discount);
-	order.setPriceDrop((int) priceDropRatio * 100);
-
-	double reducedPrice = (double) prices.get(order.getProductId() - 1) - priceDropRatio
-		* prices.get(order.getProductId() - 1);
-	reducedPrice = Math.round(reducedPrice * 100) / 100;
-
-	double totalPrice = Math.round((reducedPrice * order.getQuantity()) * 100) / 100;
-	order.setReducedPrice(reducedPrice);
-	order.setTotalPrice(totalPrice);
+	order.setPriceDrop((int) (priceDropRatio * 100));
+	order.setReducedPrice(preciseReducedPrice);
+	order.setTotalPrice(preciseTotalPrice);
 
 	return order;
     }

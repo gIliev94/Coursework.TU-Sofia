@@ -10,15 +10,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.swing.JOptionPane;
-
-import org.apache.log4j.Logger;
-
 import warehouse.database.DatabaseConnector;
 import warehouse.server.WarehouseServer;
 import warehouse.utilities.Order;
 import warehouse.utilities.OrderProcessor;
+import warehouse.utilities.StringConstants;
 
 /**
  * Manages a separate path of execution for every client`s order.
@@ -27,8 +24,6 @@ import warehouse.utilities.OrderProcessor;
  *
  */
 public class ClientThread implements Runnable {
-
-    private static final Logger LOG = Logger.getLogger(WarehouseServer.class);
 
     DataInputStream requestStream;
     DataOutputStream responseStream;
@@ -48,20 +43,21 @@ public class ClientThread implements Runnable {
 	try {
 
 	    int client = 0;
-	    int productId = 0;
+	    int product = 0;
 	    int quantity = 0;
 
 	    client = requestStream.readInt();
-	    productId = requestStream.readInt();
+	    product = requestStream.readInt();
 	    quantity = requestStream.readInt();
 
-	    warnOnUnavailability(productId, quantity);
+	    warnOnUnavailability(product, quantity);
 
-	    List<Float> prices = getPrices();
+	    List<Object> prices = new ArrayList<>();
+	    DatabaseConnector.extractData(prices, "price");
 
 	    Order order = new Order();
 	    order.setClient(client);
-	    order.setProductId(productId);
+	    order.setProductId(product);
 	    order.setQuantity(quantity);
 	    order.setPrices(prices);
 
@@ -72,19 +68,33 @@ public class ClientThread implements Runnable {
 	    sendOrderDetails(order);
 
 	} catch (SQLException sqle) {
-	    LOG.error("Problem accessing DB: ", sqle);
 	    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getLocalizedMessage(), "ERROR",
 		    JOptionPane.ERROR_MESSAGE);
+	    WarehouseServer.LOG.error("Problem accessing DB: ", sqle);
 	} catch (IOException e) {
-	    LOG.info("Client disconnected.");
 	    JOptionPane.showMessageDialog(null, "Client disconnected.", "INFO", JOptionPane.INFORMATION_MESSAGE);
+	    WarehouseServer.LOG.info("Client disconnected.");
+	} catch (ClassNotFoundException e) {
+	    JOptionPane.showMessageDialog(null, e.getLocalizedMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
+	    WarehouseServer.LOG.error(e.getLocalizedMessage());
 	}
     }
 
-    private List<Float> getPrices() throws SQLException {
-	List<Float> priceList = new ArrayList<>();
-	getData(priceList);
-	return priceList;
+    private void warnOnUnavailability(int product_id, int quantity) throws SQLException, IOException,
+	    ClassNotFoundException {
+	List<Object> quantities = new ArrayList<>();
+
+	DatabaseConnector.extractData(quantities, "quantity");
+
+	int availableQuantity = (int) quantities.get(product_id - 1);
+
+	if (availableQuantity <= 0) {
+	    responseStream.writeUTF(StringConstants.NEWLINE + "   PRODUCT OUT OF STOCK!!!");
+	}
+	if (availableQuantity < quantity) {
+	    responseStream.writeUTF(StringConstants.NEWLINE + "    INSUFFICIENT QUANTITY!!!" + StringConstants.NEWLINE
+		    + StringConstants.NEWLINE + "       ONLY  " + availableQuantity + "  REMAINING...");
+	}
     }
 
     private void executeOrder(Order order) throws SQLException {
@@ -94,36 +104,11 @@ public class ClientThread implements Runnable {
     }
 
     private void sendOrderDetails(Order order) throws IOException {
-	responseStream.writeUTF("   ORDER HAS BEEN RECEIVED!\n\n    ORDERED QUANTITY: " + order.getQuantity()
-		+ "\n    DISCOUNT: " + order.getPriceDrop() + "%\n    PRICE(per product): " + order.getReducedPrice()
-		+ " ыт.\n    TOTAL PRICE: " + order.getTotalPrice() + " ыт.\n\n   THANK YOU FOR YOUR PURCHASE!");
+	responseStream.writeUTF("   ORDER HAS BEEN RECEIVED!" + StringConstants.NEWLINE + StringConstants.NEWLINE
+		+ "    ORDERED QUANTITY: " + order.getQuantity() + StringConstants.NEWLINE + "    DISCOUNT: "
+		+ order.getPriceDrop() + "%" + StringConstants.NEWLINE + "    PRICE(per product): $"
+		+ order.getReducedPrice() + StringConstants.NEWLINE + "    TOTAL PRICE: $" + order.getTotalPrice()
+		+ StringConstants.NEWLINE + StringConstants.NEWLINE + "   THANK YOU FOR YOUR PURCHASE!");
     }
 
-    private void warnOnUnavailability(int product_id, int quantity) throws SQLException, IOException {
-	ArrayList<Integer> quantities = new ArrayList<>();
-	getData(quantities, product_id, quantity);
-	if (quantities.get(product_id - 1) <= 0) {
-	    responseStream.writeUTF("\n   PRODUCT OUT OF STOCK!!!");
-	}
-	if (quantities.get(product_id - 1) < quantity) {
-	    responseStream.writeUTF("\n    INSUFFICIENT QUANTITY!!!\n\n       ONLY  " + quantities.get(product_id - 1)
-		    + "  REMAINING...");
-	}
-    }
-
-    private void getData(List<Integer> quantities, int product_id, int quantity) throws SQLException {
-	request = dbConnection.prepareStatement("select quantity from products;");
-	response = request.executeQuery();
-	while (response.next()) {
-	    quantities.add(response.getInt(1));
-	}
-    }
-
-    private void getData(List<Float> prices) throws SQLException {
-	request = dbConnection.prepareStatement("select price from products;");
-	response = request.executeQuery();
-	while (response.next()) {
-	    prices.add(response.getFloat(1));
-	}
-    }
 }

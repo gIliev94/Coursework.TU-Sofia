@@ -18,7 +18,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -27,16 +27,16 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-
 import org.apache.log4j.Logger;
-
 import warehouse.database.DBConstants;
 import warehouse.database.DatabaseConnector;
 import warehouse.server.WarehouseServer;
+import warehouse.utilities.StringConstants;
 
 /**
  * Client logic implementation/GUI for interaction with the server.
@@ -86,7 +86,6 @@ public class Client {
 	EventQueue.invokeLater(new Runnable() {
 	    public void run() {
 		try {
-		    setComponentStyles();
 		    Client window = new Client();
 		    window.formClientRequest.setVisible(true);
 		} catch (ConnectException ce) {
@@ -100,24 +99,6 @@ public class Client {
 		}
 
 	    }
-
-	    private void setComponentStyles() throws ClassNotFoundException, InstantiationException,
-		    IllegalAccessException, UnsupportedLookAndFeelException {
-
-		boolean found = false;
-		UIManager.LookAndFeelInfo iLAFs[] = UIManager.getInstalledLookAndFeels();
-
-		for (int i = 0; i < iLAFs.length; i++) {
-		    if (iLAFs[i].getName().equals("Nimbus")) {
-			UIManager.setLookAndFeel(iLAFs[i].getClassName());
-			found = true;
-		    }
-		}
-
-		if (!found) {
-		    UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsClassicLookAndFeel");
-		}
-	    }
 	});
     }
 
@@ -129,7 +110,34 @@ public class Client {
     public Client() throws Exception {
 	initResources();
 	initComboBox();
+	setComponentStyles();
 	initialize();
+    }
+
+    /**
+     * Sets the look and feel styles of all visual components to Nimbus style or
+     * Windows classic if the former is not installed.
+     * 
+     * @throws ClassNotFoundException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws UnsupportedLookAndFeelException
+     */
+    private void setComponentStyles() throws ClassNotFoundException, InstantiationException, IllegalAccessException,
+	    UnsupportedLookAndFeelException {
+	boolean found = false;
+	UIManager.LookAndFeelInfo iLAFs[] = UIManager.getInstalledLookAndFeels();
+
+	for (int i = 0; i < iLAFs.length; i++) {
+	    if (iLAFs[i].getName().equals("Nimbus")) {
+		UIManager.setLookAndFeel(iLAFs[i].getClassName());
+		found = true;
+	    }
+	}
+
+	if (!found) {
+	    UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsClassicLookAndFeel");
+	}
     }
 
     /**
@@ -174,20 +182,26 @@ public class Client {
 		    int quantity = Integer.parseInt(quantityTextField.getText());
 
 		    sendOrderRequest(client, product, quantity);
-		    receiveResponse(submitButton);
+		    showResponse();
+		    submitButton.setEnabled(false);
 		} catch (IOException ioe) {
 		    LOG.warn("Problem exchanging information: ", ioe);
-		    JOptionPane.showMessageDialog(null, "Problem exchanging information: " + ioe.getLocalizedMessage(), "ERROR",
-			    JOptionPane.ERROR_MESSAGE);
+		    JOptionPane.showMessageDialog(null, "Problem exchanging information: " + ioe.getLocalizedMessage(),
+			    "ERROR", JOptionPane.ERROR_MESSAGE);
 		}
 	    }
 
-	    private void receiveResponse(JButton submitButton) throws IOException {
-		String responseContent;
+	    private void showResponse() throws IOException {
+		String responseContent = StringConstants.EMPTY_STRING;
 
 		responseContent = responseStream.readUTF();
 		responseTextArea.setText(responseContent);
-		submitButton.setEnabled(false);
+
+		if (responseContent.contains("STOCK") || responseContent.contains("INSUFFICIENT")) {
+		    responseTextArea.setBorder(BorderFactory.createLineBorder(Color.RED, 5, true));
+		} else {
+		    responseTextArea.setBorder(BorderFactory.createLineBorder(Color.GREEN, 5, true));
+		}
 	    }
 
 	    private void sendOrderRequest(int client, int product, int quantity) throws IOException {
@@ -250,9 +264,11 @@ public class Client {
 	    }
 
 	    private void findProduct(String model) throws SQLException {
-		String query = "select `id` from products where `model` like " + "\"%" + model + "\"" + ";";
+		String query = "select `id` from products where `model` like " + StringConstants.quote("%" + model);
+
 		request = dbConnection.prepareStatement(query);
 		response = request.executeQuery();
+
 		while (response.next()) {
 		    foundProduct = response.getInt(1);
 		}
@@ -297,7 +313,7 @@ public class Client {
 	JButton ordersButton = new JButton("ORDERS PROFILE");
 	ordersButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent arg0) {
-		String profile = "";
+		String profile = StringConstants.EMPTY_STRING;
 		try {
 		    profile = assemleProfile();
 		    showProfile(profileOfAllTextArea, profile);
@@ -308,32 +324,37 @@ public class Client {
 		}
 	    }
 
-	    private void showProfile(JTextArea profileOfAllTextArea, String profile) {
-		profile = "ORDERS\tITEMS\tPROFITS\n" + profile;
-		profileOfAllTextArea.setText(profile);
-	    }
-
 	    private String assemleProfile() throws SQLException {
-		String profile = "";
+		String profile = StringConstants.EMPTY_STRING;
 		request = dbConnection.prepareStatement("call ordersProfile;");
 		response = request.executeQuery();
 		while (response.next()) {
-		    profile = response.getString(1) + "\t" + response.getString(2) + "\t" + response.getString(3);
+		    profile = response.getString("ordersMade") + StringConstants.TAB
+			    + response.getString("itemsOrdered") + StringConstants.TAB
+			    + response.getString("totalMonetaryProfits");
 		}
+
 		return profile;
 	    }
+
+	    private void showProfile(JTextArea profileOfAllTextArea, String profile) {
+		profile = "ORDERS" + StringConstants.TAB + "ITEMS" + StringConstants.TAB + "PROFITS"
+			+ StringConstants.NEWLINE + profile;
+		profileOfAllTextArea.setText(profile);
+	    }
+
 	});
 
 	JButton clientProfileButton = new JButton("CLIENT PROFILE");
 	clientProfileButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		String profile = "";
+		String profile = StringConstants.EMPTY_STRING;
 		int clientId = 0;
 
 		try {
 		    clientId = Integer.parseInt(clientIdTextFieldOrders.getText());
 		    profile = assembleClientProfile(clientId);
-		    outputClientProfile(profileClientTextArea, profile);
+		    showClientProfile(profileClientTextArea, profile);
 		} catch (SQLException sqle) {
 		    LOG.error("Problem accessing DB: ", sqle);
 		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getLocalizedMessage(), "ERROR",
@@ -341,19 +362,25 @@ public class Client {
 		}
 	    }
 
-	    private void outputClientProfile(JTextArea profileClientTextArea, String profile) {
-		profile = "ORDERS\tITEMS\tPROFITS\n" + profile;
-		profileClientTextArea.setText(profile);
+	    private String assembleClientProfile(int clientId) throws SQLException {
+		String clientProfile = StringConstants.EMPTY_STRING;
+
+		request = dbConnection.prepareStatement("call clientProfile(" + clientId + ");");
+		response = request.executeQuery();
+
+		while (response.next()) {
+		    clientProfile = response.getString("ordersMade") + StringConstants.TAB
+			    + response.getString("itemsOrdered") + StringConstants.TAB
+			    + response.getString("totalMonetaryProfits");
+		}
+
+		return clientProfile;
 	    }
 
-	    private String assembleClientProfile(int clientID) throws SQLException {
-		String clientProfile = "";
-		request = dbConnection.prepareStatement("call clientProfile(" + clientID + ");");
-		response = request.executeQuery();
-		while (response.next()) {
-		    clientProfile = response.getString(1) + "\t" + response.getString(2) + "\t" + response.getString(3);
-		}
-		return clientProfile;
+	    private void showClientProfile(JTextArea profileClientTextArea, String profile) {
+		profile = "ORDERS" + StringConstants.TAB + "ITEMS" + StringConstants.TAB + "PROFITS"
+			+ StringConstants.NEWLINE + profile;
+		profileClientTextArea.setText(profile);
 	    }
 	});
 
@@ -391,44 +418,51 @@ public class Client {
 	JButton allViewButton = new JButton("VIEW ALL");
 	allViewButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		String report = "";
+		String report = StringConstants.EMPTY_STRING;
+
 		try {
+
 		    report = assembleDiscountReport();
-		    outputDiscountReport(discountsHistoryTextArea, report);
+		    showDiscountReport(discountsHistoryTextArea, report);
 		} catch (SQLException sqle) {
 		    LOG.error("Problem accessing DB: ", sqle);
 		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getLocalizedMessage(), "ERROR",
 			    JOptionPane.ERROR_MESSAGE);
 		}
-	    }
 
-	    private void outputDiscountReport(JTextArea discountsHistoryTextArea, String report) {
-		String captions = "";
-		captions = " client\t         discount\n";
-		discountsHistoryTextArea.setText(captions + report);
 	    }
 
 	    private String assembleDiscountReport() throws SQLException {
-		String report = "";
-		String reportEntry = "";
+		String report = StringConstants.EMPTY_STRING;
+		String reportEntry = StringConstants.EMPTY_STRING;
 
 		request = dbConnection.prepareStatement("select *from discountHistory;");
 		response = request.executeQuery();
+
 		while (response.next()) {
-		    reportEntry = " " + response.getString(1) + "             " + response.getString(2);
-		    report = report + "\n" + reportEntry;
+		    reportEntry = StringConstants.WHITESPACE + response.getString("client") + "             "
+			    + response.getString("discount");
+		    report = report + StringConstants.NEWLINE + reportEntry;
 		}
+
 		return report;
+	    }
+
+	    private void showDiscountReport(JTextArea discountsHistoryTextArea, String report) {
+		String captions = StringConstants.EMPTY_STRING;
+		captions = " Client:" + StringConstants.TAB + "         Discount:" + StringConstants.NEWLINE;
+		discountsHistoryTextArea.setText(captions + report);
 	    }
 	});
 
 	JButton clientViewButton = new JButton("VIEW PER CLIENT");
 	clientViewButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		String clientDiscountReport = "";
+		String clientDiscountReport = StringConstants.EMPTY_STRING;
+
 		try {
 		    clientDiscountReport = assembleClientDiscountReport();
-		    outputClientDiscountReport(discountsHistoryTextArea, clientDiscountReport);
+		    showClientDiscountReport(discountsHistoryTextArea, clientDiscountReport);
 		} catch (SQLException sqle) {
 		    LOG.error("Problem accessing DB: ", sqle);
 		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getLocalizedMessage(), "ERROR",
@@ -436,29 +470,30 @@ public class Client {
 		}
 	    }
 
-	    private void outputClientDiscountReport(JTextArea discountsHistoryTextArea, String clientDiscountReport) {
-		String captions;
-		captions = " client\t         discount\n";
-		discountsHistoryTextArea.setText(captions + clientDiscountReport);
-	    }
-
 	    private String assembleClientDiscountReport() throws SQLException {
-		String report = "";
-		String reportEntry = "";
-
+		String report = StringConstants.EMPTY_STRING;
+		String reportEntry = StringConstants.EMPTY_STRING;
 		String clientName = clientIdTextFieldDiscounts.getText();
-		String query = "select *from discountHistory where client=" + "\"" + clientName + "\""
-			+ "order by discount;";
 
-		request = dbConnection.prepareStatement(query);
+		request = dbConnection.prepareStatement("select *from discountHistory where client="
+			+ StringConstants.quote(clientName) + "order by discount;");
 		response = request.executeQuery();
 
 		while (response.next()) {
-		    reportEntry = " " + response.getString(1) + "             " + response.getString(2);
-		    report = report + "\n" + reportEntry;
+		    reportEntry = StringConstants.WHITESPACE + response.getString("client") + "             "
+			    + response.getString("discount");
+		    report = report + StringConstants.NEWLINE + reportEntry;
 		}
+
 		return report;
 	    }
+
+	    private void showClientDiscountReport(JTextArea discountsHistoryTextArea, String clientDiscountReport) {
+		String captions = StringConstants.EMPTY_STRING;
+		captions = " Client:" + StringConstants.TAB + "         Discount:" + StringConstants.NEWLINE;
+		discountsHistoryTextArea.setText(captions + clientDiscountReport);
+	    }
+
 	});
 
 	backButtonDiscounts = new JButton("BACK TO MAIN");
@@ -527,8 +562,8 @@ public class Client {
 	    }
 
 	    private void clearFields() {
-		passwordTextField.setText("");
-		usernameTextField.setText("");
+		passwordTextField.setText(StringConstants.EMPTY_STRING);
+		usernameTextField.setText(StringConstants.EMPTY_STRING);
 		usernameTextField.setBackground(Color.WHITE);
 		passwordTextField.setBackground(Color.WHITE);
 		usernameLabel.setForeground(Color.YELLOW);
@@ -553,8 +588,8 @@ public class Client {
 		panelMain.setVisible(true);
 		panelAuthentication.setVisible(false);
 
-		passwordTextField.setText("");
-		usernameTextField.setText("");
+		passwordTextField.setText(StringConstants.EMPTY_STRING);
+		usernameTextField.setText(StringConstants.EMPTY_STRING);
 		usernameTextField.setBackground(Color.WHITE);
 		passwordTextField.setBackground(Color.WHITE);
 		usernameLabel.setForeground(Color.YELLOW);
@@ -577,40 +612,42 @@ public class Client {
     }
 
     private void initResources() throws UnknownHostException, IOException, ClassNotFoundException, SQLException {
-	clientConnection = new Socket(host, WarehouseServer.port);
+	clientConnection = new Socket(host, WarehouseServer.PORT);
 	dbConnection = DatabaseConnector.getInstance().getConnection();
 	responseStream = new DataInputStream(clientConnection.getInputStream());
 	requestStream = new DataOutputStream(clientConnection.getOutputStream());
     }
 
     private void initComboBox() throws Exception {
-	String query = "select `group`,`brand`,`model` from products order by `group`;";
+	String query = "select `group`,`brand`,`model` from products order by `group`";
+
 	request = dbConnection.prepareStatement(query);
 	response = request.executeQuery();
 	productsList = new ArrayList<String>();
 
 	while (response.next()) {
-	    productsList.add(response.getString(1) + " " + response.getString(2) + " " + response.getString(3));
+	    productsList.add(response.getString("group") + StringConstants.WHITESPACE + response.getString("brand")
+		    + StringConstants.WHITESPACE + response.getString("model"));
 	}
     }
 
     private void setupPanels(JPanel panelMain, JPanel panelAuthentication, JPanel panelProfiles, JPanel panelHistories) {
-	formClientRequest.getContentPane().add(panelMain, "name_23060868800636");
 	panelMain.setBackground(Color.BLACK);
 	panelMain.setLayout(null);
+	formClientRequest.getContentPane().add(panelMain);
 
 	panelAuthentication.setBackground(Color.BLACK);
-	formClientRequest.getContentPane().add(panelAuthentication, "name_39712632177488");
 	panelAuthentication.setLayout(null);
+	formClientRequest.getContentPane().add(panelAuthentication);
 
 	panelProfiles.setForeground(new Color(0, 0, 0));
 	panelProfiles.setBackground(Color.BLACK);
-	formClientRequest.getContentPane().add(panelProfiles, "name_23060916454223");
 	panelProfiles.setLayout(null);
+	formClientRequest.getContentPane().add(panelProfiles);
 
 	panelHistories.setBackground(Color.BLACK);
-	formClientRequest.getContentPane().add(panelHistories, "name_36511470292507");
 	panelHistories.setLayout(null);
+	formClientRequest.getContentPane().add(panelHistories);
     }
 
     private void setupMainPanelLabels(JPanel panelMain, JLabel clientIdLabel, JLabel productIdLabel,
@@ -648,13 +685,19 @@ public class Client {
 	panelMain.add(quantityTextField);
 
 	clientIdTextField.setBounds(61, 100, 86, 27);
-	panelMain.add(clientIdTextField);
 	clientIdTextField.setColumns(10);
+	panelMain.add(clientIdTextField);
 
 	responseTextArea.setBackground(new Color(255, 255, 255));
+	responseTextArea.setFont(new Font("Tahoma", Font.PLAIN, 12));
 	responseTextArea.setEditable(false);
 	responseTextArea.setBounds(231, 43, 233, 147);
 	panelMain.add(responseTextArea);
+
+	JScrollPane scrollPane = new JScrollPane();
+	scrollPane.setBounds(231, 43, 233, 147);
+	panelMain.add(scrollPane);
+	scrollPane.setViewportView(responseTextArea);
     }
 
     private void setupMainPanelButtons(JPanel panelMain, JComboBox<Object> productsDropDownList,
@@ -804,8 +847,8 @@ public class Client {
 
     private void setupAuthenticationPanelAreas(JPanel panelAuthentication) {
 	usernameTextField.setBounds(122, 102, 220, 29);
-	panelAuthentication.add(usernameTextField);
 	usernameTextField.setColumns(10);
+	panelAuthentication.add(usernameTextField);
 
 	passwordTextField.setBounds(122, 167, 220, 41);
 	panelAuthentication.add(passwordTextField);
@@ -827,4 +870,5 @@ public class Client {
 	requestStream.close();
 	responseStream.close();
     }
+
 }

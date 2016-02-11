@@ -9,15 +9,12 @@ import java.awt.event.ActionListener;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UnsupportedLookAndFeelException;
-
 import org.apache.log4j.Logger;
-
 import warehouse.client.ClientThread;
 
 /**
@@ -28,29 +25,30 @@ import warehouse.client.ClientThread;
  */
 public class WarehouseServer {
 
-    private static final Logger LOG = Logger.getLogger(WarehouseServer.class);
+    public static final Logger LOG = Logger.getLogger(WarehouseServer.class);
 
-    public static final int port = 8888;
+    public static final long START_SERVER_DELAY = 2000;
+    public static final int PORT = 8888;
+
     private static ServerSocket serverSocket;
     private static Socket clientSocket;
 
     public static void main(String[] args) {
-
 	Thread clientWorkerThread;
 
 	try {
 
-	    serverSocket = new ServerSocket(port);
+	    serverSocket = new ServerSocket(PORT);
 
 	    Dimension display = Toolkit.getDefaultToolkit().getScreenSize();
 	    JFrame panel = new JFrame();
 	    JButton button = new JButton();
 	    setupGUI(display, panel, button);
 
-	    button.setText("Server starting at port: " + port + " ...");
-	    LOG.info("Server starting at port: " + port + " ...");
+	    button.setText("Server starting at port: " + PORT + " ...");
+	    LOG.info("Server starting at port: " + PORT + " ...");
 
-	    Thread.sleep(2000);
+	    Thread.sleep(START_SERVER_DELAY);
 
 	    notifyForSuccessfulStart(button);
 
@@ -66,13 +64,13 @@ public class WarehouseServer {
 		LOG.info("Client connected");
 	    }
 	} catch (SocketException se) {
-	    LOG.warn("Server stopped!");
 	    JOptionPane.showMessageDialog(null, "Server stopped!", "INFO", JOptionPane.INFORMATION_MESSAGE);
+	    LOG.warn("Server stopped!");
 	    return;
 	} catch (Exception e) {
-	    LOG.error("Problem occurred: ", e);
 	    JOptionPane.showMessageDialog(null, "Problem occurred: " + e.getLocalizedMessage(), "ERROR",
 		    JOptionPane.ERROR_MESSAGE);
+	    LOG.error("Problem occurred: ", e);
 	}
     }
 
@@ -104,16 +102,14 @@ public class WarehouseServer {
 		try {
 		    LOG.warn("Stopping server...");
 		    panel.dispose();
-		    clientSocket.close();
 		    serverSocket.close();
+		    clientSocket.close();
 		} catch (Exception exc) {
 		    LOG.error("Problem occurred: ", exc);
-		    JOptionPane.showMessageDialog(null, "Problem occurred: " + exc.getLocalizedMessage(), "ERROR",
-			    JOptionPane.ERROR_MESSAGE);
 		}
-
 	    }
 	});
 	panel.getRootPane().setDefaultButton(button);
     }
+
 }
