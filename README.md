@@ -24,3 +24,18 @@ Specification:
 2. Develop a client-server Java application utilizing this database.
 3. The server side must be able to receive data from multiple clients(multithreading), to executre database queries and to return response to the client side.
 4. The client side must have a UI built with Swing.
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+<h1>DEMO:</h1>
+
+<h5>SERVER side - START/STOP ( simple ) :</h5>
+
+<a href="https://gyazo.com/5d7bc977f10eb0d7cf814bce903de661"><img src="https://i.gyazo.com/5d7bc977f10eb0d7cf814bce903de661.gif" alt="https://gyazo.com/5d7bc977f10eb0d7cf814bce903de661"/></a>
+
+
+
+<h5>CLIENT side - execute order from warehouse ( simple ) :</h5>
+
+<a href="https://gyazo.com/ad14b008e9fef880c07744d6ba851093"><img src="https://i.gyazo.com/ad14b008e9fef880c07744d6ba851093.gif" alt="https://gyazo.com/ad14b008e9fef880c07744d6ba851093"/></a>
+
