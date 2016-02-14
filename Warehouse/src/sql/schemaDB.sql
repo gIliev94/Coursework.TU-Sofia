@@ -8,14 +8,14 @@ CREATE TABLE `warehouse`.`products` (
 	`brand` VARCHAR( 30 ) NOT NULL ,
 	`model` VARCHAR( 10 ) NOT NULL ,
 	`quantity` SMALLINT NOT NULL ,
-	`price` FLOAT NOT NULL ,
+	`price` FLOAT( 2, 2 ) NOT NULL ,
 	PRIMARY KEY ( `id` )
 ) ENGINE = InnoDB;
 
 CREATE TABLE `warehouse`.`customers` (
 	`id` TINYINT NOT NULL  AUTO_INCREMENT ,
 	`name` VARCHAR( 255 ) NOT NULL ,
-	PRIMARY KEY ( `id` ),
+	PRIMARY KEY ( `id` )
 ) ENGINE = InnoDB;
 
 CREATE TABLE `warehouse`.`discounts` (
@@ -30,7 +30,7 @@ CREATE TABLE `warehouse`.`orders` (
 	`order_quantity` SMALLINT NOT NULL ,
 	`customer_id` TINYINT NOT NULL,
 	`discount_id` TINYINT NULL DEFAULT 0,
-	`reduced_price` FLOAT NOT NULL ,
+	`reduced_price` FLOAT( 2, 2 ) NOT NULL ,
 	FOREIGN KEY ( `customer_id` )
 		REFERENCES `warehouse`.`customers`( `id` )
 		ON DELETE CASCADE,

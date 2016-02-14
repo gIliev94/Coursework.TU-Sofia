@@ -6,15 +6,12 @@ import java.io.IOException;
 import java.net.Socket;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
 import warehouse.database.DatabaseConnector;
 import warehouse.server.WarehouseServer;
-import warehouse.utilities.Order;
-import warehouse.utilities.OrderProcessor;
 import warehouse.utilities.StringConstants;
 
 /**
@@ -25,12 +22,11 @@ import warehouse.utilities.StringConstants;
  */
 public class ClientThread implements Runnable {
 
-    DataInputStream requestStream;
-    DataOutputStream responseStream;
+    private DataInputStream requestStream;
+    private DataOutputStream responseStream;
 
-    Connection dbConnection;
-    PreparedStatement request;
-    ResultSet response;
+    private Connection dbConnection;
+    private PreparedStatement request;
 
     public ClientThread(Socket clientConnection) throws ClassNotFoundException, SQLException, IOException {
 	this.dbConnection = DatabaseConnector.getInstance().getConnection();

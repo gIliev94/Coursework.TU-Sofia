@@ -1,4 +1,4 @@
-package warehouse.utilities;
+package warehouse.client;
 
 import java.util.List;
 

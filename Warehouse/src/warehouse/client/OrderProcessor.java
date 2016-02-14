@@ -1,7 +1,8 @@
-package warehouse.utilities;
+package warehouse.client;
 
 import java.math.BigDecimal;
 import java.util.List;
+import warehouse.utilities.OrdersAndDiscountsConstants;
 
 /**
  * Processor implementation for the orders.
