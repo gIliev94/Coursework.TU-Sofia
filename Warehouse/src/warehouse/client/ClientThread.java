@@ -85,11 +85,11 @@ public class ClientThread implements Runnable {
 	int availableQuantity = (int) quantities.get(product_id - 1);
 
 	if (availableQuantity <= 0) {
-	    responseStream.writeUTF(StringConstants.NEWLINE + "   PRODUCT OUT OF STOCK!!!");
+	    responseStream.writeUTF(StringConstants.LINE + "   PRODUCT OUT OF STOCK!!!");
 	}
 	if (availableQuantity < quantity) {
-	    responseStream.writeUTF(StringConstants.NEWLINE + "    INSUFFICIENT QUANTITY!!!" + StringConstants.NEWLINE
-		    + StringConstants.NEWLINE + "       ONLY  " + availableQuantity + "  REMAINING...");
+	    responseStream.writeUTF(StringConstants.LINE + "    INSUFFICIENT QUANTITY!!!" + StringConstants.LINE
+		    + StringConstants.LINE + "       ONLY  " + availableQuantity + "  REMAINING...");
 	}
     }
 
@@ -100,11 +100,11 @@ public class ClientThread implements Runnable {
     }
 
     private void sendOrderDetails(Order order) throws IOException {
-	responseStream.writeUTF("   ORDER HAS BEEN RECEIVED!" + StringConstants.NEWLINE + StringConstants.NEWLINE
-		+ "    ORDERED QUANTITY: " + order.getQuantity() + StringConstants.NEWLINE + "    DISCOUNT: "
-		+ order.getPriceDrop() + "%" + StringConstants.NEWLINE + "    PRICE(per product): $"
-		+ order.getReducedPrice() + StringConstants.NEWLINE + "    TOTAL PRICE: $" + order.getTotalPrice()
-		+ StringConstants.NEWLINE + StringConstants.NEWLINE + "   THANK YOU FOR YOUR PURCHASE!");
+	responseStream.writeUTF("   ORDER HAS BEEN RECEIVED!" + StringConstants.LINE + StringConstants.LINE
+		+ "    ORDERED QUANTITY: " + order.getQuantity() + StringConstants.LINE + "    DISCOUNT: "
+		+ order.getPriceDrop() + "%" + StringConstants.LINE + "    PRICE(per product): $"
+		+ order.getReducedPrice() + StringConstants.LINE + "    TOTAL PRICE: $" + order.getTotalPrice()
+		+ StringConstants.LINE + StringConstants.LINE + "   THANK YOU FOR YOUR PURCHASE!");
     }
 
 }

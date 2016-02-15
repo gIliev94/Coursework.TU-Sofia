@@ -145,12 +145,12 @@ public class ClientMain {
 
 	// ---------------------- PANEL MAIN --------------------- //
 
-	JLabel clienÚLabel = new JLabel("Client ID:");
+	JLabel clien√≤Label = new JLabel("Client ID:");
 	JLabel productLabel = new JLabel("Product:");
 	JLabel quantityLabel = new JLabel("Quantity:");
 	JLabel sectionLabel = new JLabel("----------------------------EMPLOYEE SECTION----------------------------");
 	JLabel outputLabel = new JLabel("YOUR ORDER:");
-	Labels.configureMainLabels(panelMain, clienÚLabel, productLabel, sectionLabel, quantityLabel, outputLabel);
+	Labels.configureMainLabels(panelMain, clien√≤Label, productLabel, sectionLabel, quantityLabel, outputLabel);
 
 	JTextField clientIdField = new JTextField();
 	JTextField quantityField = new JTextField();
@@ -187,7 +187,7 @@ public class ClientMain {
 	    }
 
 	    private void showResponse() throws IOException {
-		String responseContent = StringConstants.EMPTY_STRING;
+		String responseContent = StringConstants.EMPTY;
 
 		responseContent = responseStream.readUTF();
 		outputArea.setText(responseContent);
@@ -309,7 +309,7 @@ public class ClientMain {
 	JButton genericProfileButton = new JButton("ORDERS PROFILE");
 	genericProfileButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent arg0) {
-		String profile = StringConstants.EMPTY_STRING;
+		String profile = StringConstants.EMPTY;
 		try {
 		    profile = assemleProfile();
 		    showProfile(genericProfileArea, profile);
@@ -321,7 +321,7 @@ public class ClientMain {
 	    }
 
 	    private String assemleProfile() throws SQLException {
-		String profile = StringConstants.EMPTY_STRING;
+		String profile = StringConstants.EMPTY;
 		request = dbConnection.prepareStatement("call ordersProfile;");
 		response = request.executeQuery();
 		while (response.next()) {
@@ -335,7 +335,7 @@ public class ClientMain {
 
 	    private void showProfile(JTextArea profileOfAllTextArea, String profile) {
 		profile = "ORDERS" + StringConstants.TAB + "ITEMS" + StringConstants.TAB + "PROFITS"
-			+ StringConstants.NEWLINE + profile;
+			+ StringConstants.LINE + profile;
 		profileOfAllTextArea.setText(profile);
 	    }
 
@@ -344,7 +344,7 @@ public class ClientMain {
 	JButton personalProfileButton = new JButton("CLIENT PROFILE");
 	personalProfileButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		String profile = StringConstants.EMPTY_STRING;
+		String profile = StringConstants.EMPTY;
 		int clientId = 0;
 
 		try {
@@ -363,7 +363,7 @@ public class ClientMain {
 	    }
 
 	    private String assembleClientProfile(int clientId) throws SQLException, NumberFormatException {
-		String clientProfile = StringConstants.EMPTY_STRING;
+		String clientProfile = StringConstants.EMPTY;
 
 		request = dbConnection.prepareStatement("call clientProfile(" + clientId + ");");
 		response = request.executeQuery();
@@ -379,7 +379,7 @@ public class ClientMain {
 
 	    private void showClientProfile(JTextArea profileClientTextArea, String profile) {
 		profile = "ORDERS" + StringConstants.TAB + "ITEMS" + StringConstants.TAB + "PROFITS"
-			+ StringConstants.NEWLINE + profile;
+			+ StringConstants.LINE + profile;
 		profileClientTextArea.setText(profile);
 	    }
 	});
@@ -419,7 +419,7 @@ public class ClientMain {
 	JButton genericHistoryButton = new JButton("VIEW ALL");
 	genericHistoryButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		String report = StringConstants.EMPTY_STRING;
+		String report = StringConstants.EMPTY;
 
 		try {
 
@@ -434,24 +434,24 @@ public class ClientMain {
 	    }
 
 	    private String assembleDiscountReport() throws SQLException {
-		String report = StringConstants.EMPTY_STRING;
-		String reportEntry = StringConstants.EMPTY_STRING;
+		String report = StringConstants.EMPTY;
+		String reportEntry = StringConstants.EMPTY;
 
 		request = dbConnection.prepareStatement("select *from discountHistory;");
 		response = request.executeQuery();
 
 		while (response.next()) {
-		    reportEntry = StringConstants.WHITESPACE + response.getString("client") + "             "
+		    reportEntry = StringConstants.SPACE + response.getString("client") + "             "
 			    + response.getString("discount");
-		    report = report + StringConstants.NEWLINE + reportEntry;
+		    report = report + StringConstants.LINE + reportEntry;
 		}
 
 		return report;
 	    }
 
 	    private void showDiscountReport(JTextArea discountsHistoryTextArea, String report) {
-		String captions = StringConstants.EMPTY_STRING;
-		captions = " Client:" + StringConstants.TAB + "         Discount:" + StringConstants.NEWLINE;
+		String captions = StringConstants.EMPTY;
+		captions = " Client:" + StringConstants.TAB + "         Discount:" + StringConstants.LINE;
 		discountsHistoryTextArea.setText(captions + report);
 	    }
 	});
@@ -459,7 +459,7 @@ public class ClientMain {
 	JButton personalHistoryButton = new JButton("VIEW PER CLIENT");
 	personalHistoryButton.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		String clientDiscountReport = StringConstants.EMPTY_STRING;
+		String clientDiscountReport = StringConstants.EMPTY;
 
 		try {
 		    clientDiscountReport = assembleClientDiscountReport();
@@ -472,8 +472,8 @@ public class ClientMain {
 	    }
 
 	    private String assembleClientDiscountReport() throws SQLException {
-		String report = StringConstants.EMPTY_STRING;
-		String reportEntry = StringConstants.EMPTY_STRING;
+		String report = StringConstants.EMPTY;
+		String reportEntry = StringConstants.EMPTY;
 		String clientName = clientNameField.getText();
 
 		if (QueryValidator.validateClientNameString(clientName)) {
@@ -483,17 +483,17 @@ public class ClientMain {
 		}
 
 		while (response.next()) {
-		    reportEntry = StringConstants.WHITESPACE + response.getString("client") + "             "
+		    reportEntry = StringConstants.SPACE + response.getString("client") + "             "
 			    + response.getString("discount");
-		    report = report + StringConstants.NEWLINE + reportEntry;
+		    report = report + StringConstants.LINE + reportEntry;
 		}
 
-		return report != StringConstants.EMPTY_STRING ? report : "\nWrong input - nothing to display";
+		return report != StringConstants.EMPTY ? report : "\nWrong input - nothing to display";
 	    }
 
 	    private void showClientDiscountReport(JTextArea discountsHistoryTextArea, String clientDiscountReport) {
-		String captions = StringConstants.EMPTY_STRING;
-		captions = " Client:" + StringConstants.TAB + "         Discount:" + StringConstants.NEWLINE;
+		String captions = StringConstants.EMPTY;
+		captions = " Client:" + StringConstants.TAB + "         Discount:" + StringConstants.LINE;
 		discountsHistoryTextArea.setText(captions + clientDiscountReport);
 	    }
 
@@ -564,8 +564,8 @@ public class ClientMain {
 	    }
 
 	    private void clearFields() {
-		passwordField.setText(StringConstants.EMPTY_STRING);
-		usernameField.setText(StringConstants.EMPTY_STRING);
+		passwordField.setText(StringConstants.EMPTY);
+		usernameField.setText(StringConstants.EMPTY);
 		usernameField.setBackground(Color.WHITE);
 		passwordField.setBackground(Color.WHITE);
 		usernameLabel.setForeground(Color.YELLOW);
@@ -591,8 +591,8 @@ public class ClientMain {
 		panelAuthentication.setVisible(false);
 		clientForm.getRootPane().setDefaultButton(submitButton);
 
-		passwordField.setText(StringConstants.EMPTY_STRING);
-		usernameField.setText(StringConstants.EMPTY_STRING);
+		passwordField.setText(StringConstants.EMPTY);
+		usernameField.setText(StringConstants.EMPTY);
 		usernameField.setBackground(Color.WHITE);
 		passwordField.setBackground(Color.WHITE);
 		usernameLabel.setForeground(Color.YELLOW);
@@ -617,8 +617,8 @@ public class ClientMain {
 	productsList = new ArrayList<String>();
 
 	while (response.next()) {
-	    productsList.add(response.getString("group") + StringConstants.WHITESPACE + response.getString("brand")
-		    + StringConstants.WHITESPACE + response.getString("model"));
+	    productsList.add(response.getString("group") + StringConstants.SPACE + response.getString("brand")
+		    + StringConstants.SPACE + response.getString("model"));
 	}
     }
 
