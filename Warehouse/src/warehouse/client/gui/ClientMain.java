@@ -45,26 +45,26 @@ public class ClientMain {
 
     private static final Logger LOG = Logger.getLogger(ClientMain.class);
 
-    private JFrame clientForm;
-    private JTextField usernameField;
-    private JButton loginButton;
-    private JButton backButtonProfiles;
-    private JButton backButtonHistories;
+    private JFrame formClient;
+    private JTextField fieldUsername;
+    private JButton buttonLogin;
+    private JButton buttonBackProfiles;
+    private JButton buttonBackHistories;
 
     private static final String host = "localhost";
-    private Socket clientConnection;
+    private Socket connectionClient;
 
-    private Connection dbConnection;
+    private Connection connectionDB;
     private PreparedStatement request;
     private ResultSet response;
 
-    private DataInputStream responseStream;
-    private DataOutputStream requestStream;
+    private DataInputStream streamResponse;
+    private DataOutputStream streamRequest;
 
     public static List<String> productsList;
+    private boolean userLoggedIn = false;
     private int foundProduct = 0;
     private int loginDispatcher = 0;
-    private boolean isLoggedIn = false;
 
     private static final int LOG_IN_PROFILES = 1;
     private static final int LOG_IN_HISTORIES = 2;
@@ -77,7 +77,7 @@ public class ClientMain {
 	    public void run() {
 		try {
 		    ClientMain window = new ClientMain();
-		    window.clientForm.setVisible(true);
+		    window.formClient.setVisible(true);
 		} catch (ConnectException ce) {
 		    LOG.info("No server available for connection!");
 		    JOptionPane.showMessageDialog(null, "No server available for connection!", "ERROR",
@@ -134,32 +134,32 @@ public class ClientMain {
      * Initialize the contents of the frame.
      */
     private void initialize() {
-	clientForm = new JFrame();
-	Forms.configureClientForm(clientForm);
+	formClient = new JFrame();
+	Forms.configureClientForm(formClient);
 
 	JPanel panelMain = new JPanel();
 	JPanel panelAuthentication = new JPanel();
 	JPanel panelProfiles = new JPanel();
 	JPanel panelHistories = new JPanel();
-	Panels.configurePanels(clientForm, panelMain, panelAuthentication, panelProfiles, panelHistories);
+	Panels.configurePanels(formClient, panelMain, panelAuthentication, panelProfiles, panelHistories);
 
 	// ---------------------- PANEL MAIN --------------------- //
 
-	JLabel clienòLabel = new JLabel("Client ID:");
-	JLabel productLabel = new JLabel("Product:");
-	JLabel quantityLabel = new JLabel("Quantity:");
-	JLabel sectionLabel = new JLabel("----------------------------EMPLOYEE SECTION----------------------------");
-	JLabel outputLabel = new JLabel("YOUR ORDER:");
-	Labels.configureMainLabels(panelMain, clienòLabel, productLabel, sectionLabel, quantityLabel, outputLabel);
+	JLabel labelClient = new JLabel("Client ID:");
+	JLabel labelProduct = new JLabel("Product:");
+	JLabel labelQuantity = new JLabel("Quantity:");
+	JLabel labelSection = new JLabel("----------------------------EMPLOYEE SECTION----------------------------");
+	JLabel labelOutput = new JLabel("YOUR ORDER:");
+	Labels.configureMainLabels(panelMain, labelClient, labelProduct, labelSection, labelQuantity, labelOutput);
 
-	JTextField clientIdField = new JTextField();
-	JTextField quantityField = new JTextField();
-	JTextArea outputArea = new JTextArea();
-	Areas.configureMainAreas(panelMain, outputArea);
-	Fields.configureMainFields(panelMain, clientIdField, quantityField);
+	JTextField fieldClientId = new JTextField();
+	JTextField fieldQuantity = new JTextField();
+	JTextArea areaOutput = new JTextArea();
+	Areas.configureMainAreas(panelMain, areaOutput);
+	Fields.configureMainFields(panelMain, fieldClientId, fieldQuantity);
 
-	JButton submitButton = new JButton("SUBMIT");
-	submitButton.addActionListener(new ActionListener() {
+	JButton buttonSubmit = new JButton("SUBMIT");
+	buttonSubmit.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent arg0) {
 		try {
 		    if (foundProduct == 0) {
@@ -168,13 +168,13 @@ public class ClientMain {
 			return;
 		    }
 
-		    int client = Integer.parseInt(clientIdField.getText());
+		    int client = Integer.parseInt(fieldClientId.getText());
 		    int product = foundProduct;
-		    int quantity = Integer.parseInt(quantityField.getText());
+		    int quantity = Integer.parseInt(fieldQuantity.getText());
 
 		    sendOrderRequest(client, product, quantity);
 		    showResponse();
-		    submitButton.setEnabled(false);
+		    buttonSubmit.setEnabled(false);
 		} catch (IOException ioe) {
 		    LOG.warn("Problem exchanging information: ", ioe);
 		    JOptionPane.showMessageDialog(null, "Problem exchanging information: " + ioe.getLocalizedMessage(),
@@ -189,27 +189,27 @@ public class ClientMain {
 	    private void showResponse() throws IOException {
 		String responseContent = StringConstants.EMPTY;
 
-		responseContent = responseStream.readUTF();
-		outputArea.setText(responseContent);
+		responseContent = streamResponse.readUTF();
+		areaOutput.setText(responseContent);
 
 		if (responseContent.contains("STOCK") || responseContent.contains("INSUFFICIENT")) {
-		    outputArea.setBorder(BorderFactory.createLineBorder(Color.RED, 5, true));
+		    areaOutput.setBorder(BorderFactory.createLineBorder(Color.RED, 5, true));
 		} else {
-		    outputArea.setBorder(BorderFactory.createLineBorder(Color.GREEN, 5, true));
+		    areaOutput.setBorder(BorderFactory.createLineBorder(Color.GREEN, 5, true));
 		}
 	    }
 
 	    private void sendOrderRequest(int client, int product, int quantity) throws IOException {
-		requestStream.writeInt(client);
-		requestStream.writeInt(product);
-		requestStream.writeInt(quantity);
+		streamRequest.writeInt(client);
+		streamRequest.writeInt(product);
+		streamRequest.writeInt(quantity);
 	    }
 	});
 
-	JButton exitButton = new JButton("EXIT");
-	exitButton.addActionListener(new ActionListener() {
+	JButton buttonExit = new JButton("EXIT");
+	buttonExit.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent arg0) {
-		clientForm.dispose();
+		formClient.dispose();
 		try {
 		    cleanup();
 		} catch (IOException e) {
@@ -225,46 +225,46 @@ public class ClientMain {
 	    }
 	});
 
-	JButton profilesButton = new JButton("ORDERS & PROFITS");
-	profilesButton.addActionListener(new ActionListener() {
+	JButton buttonProfiles = new JButton("ORDERS & PROFITS");
+	buttonProfiles.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		if (isLoggedIn) {
+		if (userLoggedIn) {
 		    panelMain.setVisible(false);
 		    panelProfiles.setVisible(true);
-		    clientForm.getRootPane().setDefaultButton(backButtonProfiles);
+		    formClient.getRootPane().setDefaultButton(buttonBackProfiles);
 		} else {
 		    panelMain.setVisible(false);
 		    panelAuthentication.setVisible(true);
 		    loginDispatcher = LOG_IN_PROFILES;
-		    usernameField.requestFocusInWindow();
-		    clientForm.getRootPane().setDefaultButton(loginButton);
+		    fieldUsername.requestFocusInWindow();
+		    formClient.getRootPane().setDefaultButton(buttonLogin);
 		}
 	    }
 	});
 
-	JButton historiesButton = new JButton("DISCOUNTS HISTORY");
-	historiesButton.addActionListener(new ActionListener() {
+	JButton buttonHistories = new JButton("DISCOUNTS HISTORY");
+	buttonHistories.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		if (isLoggedIn) {
+		if (userLoggedIn) {
 		    panelMain.setVisible(false);
 		    panelHistories.setVisible(true);
-		    clientForm.getRootPane().setDefaultButton(backButtonHistories);
+		    formClient.getRootPane().setDefaultButton(buttonBackHistories);
 		} else {
 		    panelMain.setVisible(false);
 		    panelAuthentication.setVisible(true);
 		    loginDispatcher = LOG_IN_HISTORIES;
-		    usernameField.requestFocusInWindow();
-		    clientForm.getRootPane().setDefaultButton(loginButton);
+		    fieldUsername.requestFocusInWindow();
+		    formClient.getRootPane().setDefaultButton(buttonLogin);
 		}
 	    }
 	});
 
-	JComboBox<Object> productChoiceList = new JComboBox<>(productsList.toArray());
-	productChoiceList.setSelectedItem(null);
-	productChoiceList.addActionListener(new ActionListener() {
+	JComboBox<Object> choiceListProduct = new JComboBox<>(productsList.toArray());
+	choiceListProduct.setSelectedItem(null);
+	choiceListProduct.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		try {
-		    String productInformation = (String) productChoiceList.getSelectedItem();
+		    String productInformation = (String) choiceListProduct.getSelectedItem();
 		    String model = productInformation.substring(productInformation.length() - 3);
 
 		    findProduct(model);
@@ -278,7 +278,7 @@ public class ClientMain {
 	    private void findProduct(String model) throws SQLException {
 		String query = "select `id` from products where `model` like " + StringConstants.quote("%" + model);
 
-		request = dbConnection.prepareStatement(query);
+		request = connectionDB.prepareStatement(query);
 		response = request.executeQuery();
 
 		while (response.next()) {
@@ -286,33 +286,33 @@ public class ClientMain {
 		}
 	    }
 	});
-	ChoiceLists.configureMainProductsList(panelMain, productChoiceList);
-	Buttons.configureMainButtons(panelMain, profilesButton, historiesButton, exitButton, submitButton);
-	clientForm.getRootPane().setDefaultButton(submitButton);
+	ChoiceLists.configureMainProductsList(panelMain, choiceListProduct);
+	Buttons.configureMainButtons(panelMain, buttonProfiles, buttonHistories, buttonExit, buttonSubmit);
+	formClient.getRootPane().setDefaultButton(buttonSubmit);
 
 	// ---------------------- PANEL PROFILES --------------------- //
 
-	JLabel clientLabelProfiles = new JLabel("CLIENT ID:");
-	JLabel genericProfileLabel = new JLabel("PROFILE OF ALL ORDERS");
-	JLabel personalProfileLabel = new JLabel("PROFILE OF SPECIFIC CLIENT:");
-	JLabel outputProfilesLabel = new JLabel("ORDER & CLIENT PROFILES");
-	Labels.configureProfilesLabels(panelProfiles, outputProfilesLabel, personalProfileLabel, genericProfileLabel,
-		clientLabelProfiles);
+	JLabel labelClientProfiles = new JLabel("CLIENT ID:");
+	JLabel labelGenericProfile = new JLabel("PROFILE OF ALL ORDERS");
+	JLabel labelPersonalProfile = new JLabel("PROFILE OF SPECIFIC CLIENT:");
+	JLabel labelOutputProfiles = new JLabel("ORDER & CLIENT PROFILES");
+	Labels.configureProfilesLabels(panelProfiles, labelOutputProfiles, labelPersonalProfile, labelGenericProfile,
+		labelClientProfiles);
 
-	JTextField clientFieldProfiles = new JTextField();
-	Fields.configureProfilesFields(panelProfiles, clientFieldProfiles);
+	JTextField fieldClientProfiles = new JTextField();
+	Fields.configureProfilesFields(panelProfiles, fieldClientProfiles);
 
-	JTextArea genericProfileArea = new JTextArea();
-	JTextArea personalProfileArea = new JTextArea();
-	Areas.configureProfilesAreas(panelProfiles, personalProfileArea, genericProfileArea);
+	JTextArea areaGenericProfile = new JTextArea();
+	JTextArea areaPersonalProfile = new JTextArea();
+	Areas.configureProfilesAreas(panelProfiles, areaPersonalProfile, areaGenericProfile);
 
-	JButton genericProfileButton = new JButton("ORDERS PROFILE");
-	genericProfileButton.addActionListener(new ActionListener() {
+	JButton buttonGenericProfile = new JButton("ORDERS PROFILE");
+	buttonGenericProfile.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent arg0) {
 		String profile = StringConstants.EMPTY;
 		try {
 		    profile = assemleProfile();
-		    showProfile(genericProfileArea, profile);
+		    showProfile(areaGenericProfile, profile);
 		} catch (SQLException sqle) {
 		    LOG.error("Problem accessing DB: ", sqle);
 		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getLocalizedMessage(), "ERROR",
@@ -322,7 +322,7 @@ public class ClientMain {
 
 	    private String assemleProfile() throws SQLException {
 		String profile = StringConstants.EMPTY;
-		request = dbConnection.prepareStatement("call ordersProfile;");
+		request = connectionDB.prepareStatement("call ordersProfile;");
 		response = request.executeQuery();
 		while (response.next()) {
 		    profile = response.getString("ordersMade") + StringConstants.TAB
@@ -341,16 +341,16 @@ public class ClientMain {
 
 	});
 
-	JButton personalProfileButton = new JButton("CLIENT PROFILE");
-	personalProfileButton.addActionListener(new ActionListener() {
+	JButton buttonPersonalProfile = new JButton("CLIENT PROFILE");
+	buttonPersonalProfile.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		String profile = StringConstants.EMPTY;
 		int clientId = 0;
 
 		try {
-		    clientId = Integer.parseInt(clientFieldProfiles.getText());
+		    clientId = Integer.parseInt(fieldClientProfiles.getText());
 		    profile = assembleClientProfile(clientId);
-		    showClientProfile(personalProfileArea, profile);
+		    showClientProfile(areaPersonalProfile, profile);
 		} catch (SQLException sqle) {
 		    LOG.error("Problem accessing DB: ", sqle);
 		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getLocalizedMessage(), "ERROR",
@@ -365,7 +365,7 @@ public class ClientMain {
 	    private String assembleClientProfile(int clientId) throws SQLException, NumberFormatException {
 		String clientProfile = StringConstants.EMPTY;
 
-		request = dbConnection.prepareStatement("call clientProfile(" + clientId + ");");
+		request = connectionDB.prepareStatement("call clientProfile(" + clientId + ");");
 		response = request.executeQuery();
 
 		while (response.next()) {
@@ -384,47 +384,47 @@ public class ClientMain {
 	    }
 	});
 
-	backButtonProfiles = new JButton("BACK TO MAIN");
-	backButtonProfiles.addActionListener(new ActionListener() {
+	buttonBackProfiles = new JButton("BACK TO MAIN");
+	buttonBackProfiles.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		panelMain.setVisible(true);
 		panelProfiles.setVisible(false);
-		clientForm.getRootPane().setDefaultButton(submitButton);
+		formClient.getRootPane().setDefaultButton(buttonSubmit);
 	    }
 	});
 
-	JButton logoutButtonProfiles = new JButton("LOGOUT");
-	logoutButtonProfiles.addActionListener(new ActionListener() {
+	JButton buttonLogoutProfiles = new JButton("LOGOUT");
+	buttonLogoutProfiles.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		panelProfiles.setVisible(false);
 		panelMain.setVisible(true);
-		isLoggedIn = false;
-		clientForm.getRootPane().setDefaultButton(submitButton);
+		userLoggedIn = false;
+		formClient.getRootPane().setDefaultButton(buttonSubmit);
 	    }
 	});
-	Buttons.configureProfilesButtons(panelProfiles, logoutButtonProfiles, backButtonProfiles,
-		personalProfileButton, genericProfileButton);
+	Buttons.configureProfilesButtons(panelProfiles, buttonLogoutProfiles, buttonBackProfiles,
+		buttonPersonalProfile, buttonGenericProfile);
 
 	// ---------------------- PANEL HISTORIES --------------------- //
 
-	JLabel dicountsLabel = new JLabel("DISCOUNTS HISTORY");
-	JLabel clientIdLabelDiscounts = new JLabel("CLIENT NAME:");
-	Labels.configureHistoriesLabels(panelHistories, clientIdLabelDiscounts, dicountsLabel);
+	JLabel labelDiscounts = new JLabel("DISCOUNTS HISTORY");
+	JLabel labelClientIdDiscounts = new JLabel("CLIENT NAME:");
+	Labels.configureHistoriesLabels(panelHistories, labelClientIdDiscounts, labelDiscounts);
 
-	JTextField clientNameField = new JTextField();
-	JTextArea discountsHistoryArea = new JTextArea();
-	Fields.configureHistoriesFields(panelHistories, clientNameField);
-	Areas.configureHistoriesAreas(panelHistories, discountsHistoryArea);
+	JTextField fieldClientName = new JTextField();
+	JTextArea areaDiscountHistory = new JTextArea();
+	Fields.configureHistoriesFields(panelHistories, fieldClientName);
+	Areas.configureHistoriesAreas(panelHistories, areaDiscountHistory);
 
-	JButton genericHistoryButton = new JButton("VIEW ALL");
-	genericHistoryButton.addActionListener(new ActionListener() {
+	JButton buttonGenericHistory = new JButton("VIEW ALL");
+	buttonGenericHistory.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		String report = StringConstants.EMPTY;
 
 		try {
 
 		    report = assembleDiscountReport();
-		    showDiscountReport(discountsHistoryArea, report);
+		    showDiscountReport(areaDiscountHistory, report);
 		} catch (SQLException sqle) {
 		    LOG.error("Problem accessing DB: ", sqle);
 		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getLocalizedMessage(), "ERROR",
@@ -437,7 +437,7 @@ public class ClientMain {
 		String report = StringConstants.EMPTY;
 		String reportEntry = StringConstants.EMPTY;
 
-		request = dbConnection.prepareStatement("select *from discountHistory;");
+		request = connectionDB.prepareStatement("select *from discountHistory;");
 		response = request.executeQuery();
 
 		while (response.next()) {
@@ -456,14 +456,14 @@ public class ClientMain {
 	    }
 	});
 
-	JButton personalHistoryButton = new JButton("VIEW PER CLIENT");
-	personalHistoryButton.addActionListener(new ActionListener() {
+	JButton buttonPersonalHistory = new JButton("VIEW PER CLIENT");
+	buttonPersonalHistory.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		String clientDiscountReport = StringConstants.EMPTY;
 
 		try {
 		    clientDiscountReport = assembleClientDiscountReport();
-		    showClientDiscountReport(discountsHistoryArea, clientDiscountReport);
+		    showClientDiscountReport(areaDiscountHistory, clientDiscountReport);
 		} catch (SQLException sqle) {
 		    LOG.error("Problem accessing DB: ", sqle);
 		    JOptionPane.showMessageDialog(null, "Problem accessing DB: " + sqle.getLocalizedMessage(), "ERROR",
@@ -474,10 +474,10 @@ public class ClientMain {
 	    private String assembleClientDiscountReport() throws SQLException {
 		String report = StringConstants.EMPTY;
 		String reportEntry = StringConstants.EMPTY;
-		String clientName = clientNameField.getText();
+		String clientName = fieldClientName.getText();
 
 		if (QueryValidator.validateClientNameString(clientName)) {
-		    request = dbConnection.prepareStatement("select *from discountHistory where client="
+		    request = connectionDB.prepareStatement("select *from discountHistory where client="
 			    + StringConstants.quote(clientName) + "order by discount;");
 		    response = request.executeQuery();
 		}
@@ -499,43 +499,43 @@ public class ClientMain {
 
 	});
 
-	backButtonHistories = new JButton("BACK TO MAIN");
-	backButtonHistories.addActionListener(new ActionListener() {
+	buttonBackHistories = new JButton("BACK TO MAIN");
+	buttonBackHistories.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent arg0) {
 		panelMain.setVisible(true);
 		panelHistories.setVisible(false);
-		clientForm.getRootPane().setDefaultButton(submitButton);
+		formClient.getRootPane().setDefaultButton(buttonSubmit);
 	    }
 	});
 
-	JButton logoutButtonHistories = new JButton("LOGOUT");
-	logoutButtonHistories.addActionListener(new ActionListener() {
+	JButton buttonLogoutHistories = new JButton("LOGOUT");
+	buttonLogoutHistories.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		panelHistories.setVisible(false);
 		panelMain.setVisible(true);
-		isLoggedIn = false;
-		clientForm.getRootPane().setDefaultButton(submitButton);
+		userLoggedIn = false;
+		formClient.getRootPane().setDefaultButton(buttonSubmit);
 	    }
 	});
-	Buttons.configureHistoriesButtons(panelHistories, logoutButtonHistories, backButtonHistories,
-		personalHistoryButton, genericHistoryButton);
+	Buttons.configureHistoriesButtons(panelHistories, buttonLogoutHistories, buttonBackHistories,
+		buttonPersonalHistory, buttonGenericHistory);
 
 	// ---------------------- PANEL AUTHENTICATION ---------------------//
 
-	JLabel loginLabel = new JLabel("AUTHENTICATION FORM");
-	JLabel usernameLabel = new JLabel("USERNAME:");
-	JLabel passwordLabel = new JLabel("PASSWORD:");
-	Labels.configureAuthenticationLabels(panelAuthentication, passwordLabel, usernameLabel, loginLabel);
+	JLabel labelLogin = new JLabel("AUTHENTICATION FORM");
+	JLabel labelUsername = new JLabel("USERNAME:");
+	JLabel labelPassword = new JLabel("PASSWORD:");
+	Labels.configureAuthenticationLabels(panelAuthentication, labelPassword, labelUsername, labelLogin);
 
-	usernameField = new JTextField();
-	JPasswordField passwordField = new JPasswordField();
-	Fields.configureAuthenticationFields(panelAuthentication, usernameField, passwordField);
+	fieldUsername = new JTextField();
+	JPasswordField fieldPassword = new JPasswordField();
+	Fields.configureAuthenticationFields(panelAuthentication, fieldUsername, fieldPassword);
 
-	loginButton = new JButton("LOG IN");
-	loginButton.addActionListener(new ActionListener() {
+	buttonLogin = new JButton("LOG IN");
+	buttonLogin.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		String username = usernameField.getText();
-		String password = new String(passwordField.getPassword());
+		String username = fieldUsername.getText();
+		String password = new String(fieldPassword.getPassword());
 
 		if (username.equalsIgnoreCase(DBConstants.USER) && password.equals(DBConstants.PASSWORD)
 			&& loginDispatcher == LOG_IN_PROFILES) {
@@ -547,16 +547,16 @@ public class ClientMain {
 		    clearFields();
 		} else {
 		    if (!username.equalsIgnoreCase(DBConstants.USER) && !password.equals(DBConstants.PASSWORD)) {
-			usernameLabel.setForeground(Color.RED);
-			usernameField.setBackground(Color.RED);
-			passwordLabel.setForeground(Color.RED);
-			passwordField.setBackground(Color.RED);
+			labelUsername.setForeground(Color.RED);
+			fieldUsername.setBackground(Color.RED);
+			labelPassword.setForeground(Color.RED);
+			fieldPassword.setBackground(Color.RED);
 		    } else if (!username.equalsIgnoreCase(DBConstants.USER)) {
-			usernameLabel.setForeground(Color.RED);
-			usernameField.setBackground(Color.RED);
+			labelUsername.setForeground(Color.RED);
+			fieldUsername.setBackground(Color.RED);
 		    } else if (!password.equals(DBConstants.PASSWORD)) {
-			passwordLabel.setForeground(Color.RED);
-			passwordField.setBackground(Color.RED);
+			labelPassword.setForeground(Color.RED);
+			fieldPassword.setBackground(Color.RED);
 		    }
 		    JOptionPane.showMessageDialog(null, "Wrong username/password!!!", "ERROR",
 			    JOptionPane.ERROR_MESSAGE);
@@ -564,55 +564,55 @@ public class ClientMain {
 	    }
 
 	    private void clearFields() {
-		passwordField.setText(StringConstants.EMPTY);
-		usernameField.setText(StringConstants.EMPTY);
-		usernameField.setBackground(Color.WHITE);
-		passwordField.setBackground(Color.WHITE);
-		usernameLabel.setForeground(Color.YELLOW);
-		passwordLabel.setForeground(Color.YELLOW);
+		fieldPassword.setText(StringConstants.EMPTY);
+		fieldUsername.setText(StringConstants.EMPTY);
+		fieldUsername.setBackground(Color.WHITE);
+		fieldPassword.setBackground(Color.WHITE);
+		labelUsername.setForeground(Color.YELLOW);
+		labelPassword.setForeground(Color.YELLOW);
 	    }
 
 	    private void proceedToPanel(JPanel currentPannel, JPanel nextPanel) {
 		currentPannel.setVisible(false);
 		nextPanel.setVisible(true);
-		isLoggedIn = true;
+		userLoggedIn = true;
 		if (loginDispatcher == LOG_IN_PROFILES) {
-		    clientForm.getRootPane().setDefaultButton(backButtonProfiles);
+		    formClient.getRootPane().setDefaultButton(buttonBackProfiles);
 		} else {
-		    clientForm.getRootPane().setDefaultButton(backButtonHistories);
+		    formClient.getRootPane().setDefaultButton(buttonBackHistories);
 		}
 	    }
 	});
 
-	JButton backButtonAuthentication = new JButton("BACK TO MAIN");
-	backButtonAuthentication.addActionListener(new ActionListener() {
+	JButton buttonBackAuthentication = new JButton("BACK TO MAIN");
+	buttonBackAuthentication.addActionListener(new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
 		panelMain.setVisible(true);
 		panelAuthentication.setVisible(false);
-		clientForm.getRootPane().setDefaultButton(submitButton);
+		formClient.getRootPane().setDefaultButton(buttonSubmit);
 
-		passwordField.setText(StringConstants.EMPTY);
-		usernameField.setText(StringConstants.EMPTY);
-		usernameField.setBackground(Color.WHITE);
-		passwordField.setBackground(Color.WHITE);
-		usernameLabel.setForeground(Color.YELLOW);
-		passwordLabel.setForeground(Color.YELLOW);
+		fieldPassword.setText(StringConstants.EMPTY);
+		fieldUsername.setText(StringConstants.EMPTY);
+		fieldUsername.setBackground(Color.WHITE);
+		fieldPassword.setBackground(Color.WHITE);
+		labelUsername.setForeground(Color.YELLOW);
+		labelPassword.setForeground(Color.YELLOW);
 	    }
 	});
-	Buttons.configureAuthenticationButtons(panelAuthentication, loginButton, backButtonAuthentication);
+	Buttons.configureAuthenticationButtons(panelAuthentication, buttonLogin, buttonBackAuthentication);
     }
 
     private void initResources() throws UnknownHostException, IOException, ClassNotFoundException, SQLException {
-	clientConnection = new Socket(host, WarehouseServer.PORT);
-	dbConnection = DatabaseConnector.getInstance().getConnection();
-	responseStream = new DataInputStream(clientConnection.getInputStream());
-	requestStream = new DataOutputStream(clientConnection.getOutputStream());
+	connectionClient = new Socket(host, WarehouseServer.PORT);
+	connectionDB = DatabaseConnector.getInstance().getConnection();
+	streamResponse = new DataInputStream(connectionClient.getInputStream());
+	streamRequest = new DataOutputStream(connectionClient.getOutputStream());
     }
 
     private void initComboBox() throws Exception {
 	String query = "select `group`,`brand`,`model` from products order by `group`";
 
-	request = dbConnection.prepareStatement(query);
+	request = connectionDB.prepareStatement(query);
 	response = request.executeQuery();
 	productsList = new ArrayList<String>();
 
@@ -623,8 +623,8 @@ public class ClientMain {
     }
 
     private void cleanup() throws IOException, SQLException {
-	requestStream.close();
-	responseStream.close();
+	streamRequest.close();
+	streamResponse.close();
     }
 
 }
